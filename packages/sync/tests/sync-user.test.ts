@@ -295,7 +295,7 @@ describe("createDestinationReconciliationScope", () => {
   const occurrenceMappings: EventMapping[] = [1, 2, 3].map((index) => ({
     calendarId: "destination-1",
     deleteIdentifier: `delete-identifier-${index}`,
-    destinationEventUid: `destination-uid-${index}`,
+    destinationEventUid: `destination-uid-${index}@keeper.sh`,
     endTime: new Date(`2026-03-0${index}T15:00:00.000Z`),
     eventStateId: "over-budget-series",
     id: `over-budget-mapping-${index}`,
@@ -337,7 +337,7 @@ describe("source authority for a destination with no mappings", () => {
   };
 
   const KEEPER_REMOTE_EVENT = {
-    deleteId: "remote-delete-1",
+    deleteId: "remote-delete-1@keeper.sh",
     endTime: new Date("2026-08-12T11:00:00.000Z"),
     isKeeperEvent: true,
     startTime: new Date("2026-08-12T10:00:00.000Z"),
@@ -417,7 +417,7 @@ describe("source authority for a destination with no mappings", () => {
     }]);
   });
 
-  it("still reclaims a Keeper event once the destination has a verified source", async () => {
+  it("never reclaims an unmapped Keeper event, even with a verified source", async () => {
     const authority = await resolveSourceAuthority(
       createSourceCoverageDatabase([{ id: "source-1", ...COMPLETE_SOURCE_COVERAGE }]),
       ["source-1"],
@@ -432,11 +432,7 @@ describe("source authority for a destination with no mappings", () => {
     });
 
     expect(authority.aggregateWindow).not.toBeNull();
-    expect(operations).toEqual([{
-      deleteId: KEEPER_REMOTE_EVENT.deleteId,
-      startTime: KEEPER_REMOTE_EVENT.startTime,
-      type: "remove",
-      uid: KEEPER_REMOTE_EVENT.uid,
-    }]);
+    // No mapping row records this uid, so it may be another instance's mirror.
+    expect(operations).toEqual([]);
   });
 });

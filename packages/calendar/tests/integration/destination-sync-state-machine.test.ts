@@ -182,7 +182,7 @@ class StatefulDestinationProvider implements CalendarSyncProvider {
   public pushEvents = (events: MaterializedSyncableEvent[]) => {
     this.calls.pushes.push(events.map((event) => ({ ...event })));
     return Promise.resolve(events.map((event) => {
-      const remoteId = `remote-${this.nextRemoteId++}`;
+      const remoteId = `remote-${this.nextRemoteId++}@keeper.sh`;
       this.remoteEvents.set(remoteId, { ...event });
       return { deleteId: remoteId, remoteId, success: true };
     }));
@@ -350,7 +350,7 @@ describe.each<ScenarioKind>([
   });
 });
 
-it("repairs Keeper orphans, retains user events, and converges", async () => {
+it("leaves unmapped Keeper-tagged copies and user events untouched, and converges", async () => {
   const eventStates = new InMemoryEventStateStore();
   const mappings = new InMemoryMappingStore();
   const provider = new StatefulDestinationProvider();
@@ -386,8 +386,9 @@ it("repairs Keeper orphans, retains user events, and converges", async () => {
   provider.seedRemote("user-owned-event", desiredEvent, false);
   provider.resetCalls();
 
-  await expect(runSync()).resolves.toMatchObject({ added: 0, removed: 1 });
-  expect(provider.remoteEvents.has("orphaned-keeper-copy")).toBe(false);
+  // No mapping row records either uid, so neither is provably this instance's mirror.
+  await expect(runSync()).resolves.toMatchObject({ added: 0, removed: 0 });
+  expect(provider.remoteEvents.has("orphaned-keeper-copy")).toBe(true);
   expect(provider.remoteEvents.has("user-owned-event")).toBe(true);
 
   provider.resetCalls();

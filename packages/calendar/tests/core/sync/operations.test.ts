@@ -25,7 +25,7 @@ import type {
 const createEventMapping = (overrides: Partial<EventMapping>): EventMapping => ({
   calendarId: "destination-calendar-id",
   deleteIdentifier: "delete-identifier-1",
-  destinationEventUid: "destination-uid-1",
+  destinationEventUid: "destination-uid-1@keeper.sh",
   endTime: new Date("2026-03-08T15:00:00.000Z"),
   eventStateId: "event-state-id-1",
   syncEventId: "event-state-id-1",
@@ -41,7 +41,7 @@ const createRemoteEvent = (overrides: Partial<RemoteEvent>): RemoteEvent => ({
   endTime: new Date("2026-03-08T15:00:00.000Z"),
   isKeeperEvent: false,
   startTime: new Date("2026-03-08T14:00:00.000Z"),
-  uid: "remote-uid-1",
+  uid: "remote-uid-1@keeper.sh",
   ...overrides,
 });
 
@@ -141,7 +141,7 @@ const computeSyncOperations = (
 describe("buildRemoveOperations", () => {
   it("does not remove mapped events from before the sync window", () => {
     const historicalMapping = createEventMapping({
-      destinationEventUid: "historical-uid",
+      destinationEventUid: "historical-uid@keeper.sh",
       eventStateId: "historical-event-state-id",
       endTime: new Date("2026-03-07T11:00:00.000Z"),
       id: "historical-mapping-id",
@@ -165,7 +165,7 @@ describe("buildRemoveOperations", () => {
   it("removes missing mapped events from inside the sync window", () => {
     const futureMapping = createEventMapping({
       deleteIdentifier: "future-delete-id",
-      destinationEventUid: "future-uid",
+      destinationEventUid: "future-uid@keeper.sh",
       eventStateId: "future-event-state-id",
       id: "future-mapping-id",
       startTime: new Date("2026-03-08T13:00:00.000Z"),
@@ -187,21 +187,21 @@ describe("buildRemoveOperations", () => {
       mappingId: "future-mapping-id",
       startTime: new Date("2026-03-08T13:00:00.000Z"),
       type: "remove",
-      uid: "future-uid",
+      uid: "future-uid@keeper.sh",
     });
   });
 
-  it("removes orphaned keeper events even when in the future", () => {
-    const orphanedKeeperEvent = createRemoteEvent({
+  it("never removes a keeper-tagged event that no mapping row records", () => {
+    const unmappedKeeperEvent = createRemoteEvent({
       deleteId: "orphaned-delete-id",
       isKeeperEvent: true,
       startTime: new Date("2026-03-08T18:00:00.000Z"),
-      uid: "orphaned-uid",
+      uid: "orphaned-uid@keeper.sh",
     });
 
     const operations = buildRemoveOperations(
       [],
-      [orphanedKeeperEvent],
+      [unmappedKeeperEvent],
       new Set<string>(),
       new Set<string>(),
       {
@@ -209,13 +209,7 @@ describe("buildRemoveOperations", () => {
       },
     );
 
-    expect(operations).toHaveLength(1);
-    expect(operations[0]).toEqual({
-      deleteId: "orphaned-delete-id",
-      startTime: new Date("2026-03-08T18:00:00.000Z"),
-      type: "remove",
-      uid: "orphaned-uid",
-    });
+    expect(operations).toEqual([]);
   });
 
   it("does not remove unmapped non-keeper future events", () => {
@@ -259,7 +253,7 @@ describe("buildRemoveOperations", () => {
   it("removes an untagged Outlook event when its mapping proves Keeper ownership", () => {
     const mapping = createEventMapping({
       deleteIdentifier: "mapped-outlook-id",
-      destinationEventUid: "mapped-outlook-uid",
+      destinationEventUid: "mapped-outlook-uid@keeper.sh",
     });
     const mappedRemote = createRemoteEvent({
       deleteId: mapping.deleteIdentifier,
@@ -332,8 +326,8 @@ describe("computeSyncOperations", () => {
 
   it("removes a legacy uid mapping by the provider event id already listed remotely", () => {
     const mapping = createEventMapping({
-      deleteIdentifier: "legacy-uid@google.com",
-      destinationEventUid: "legacy-uid@google.com",
+      deleteIdentifier: "legacy-uid@keeper.sh",
+      destinationEventUid: "legacy-uid@keeper.sh",
     });
     const remoteEvent = createRemoteEvent({
       deleteId: "google-event-id",
@@ -351,7 +345,7 @@ describe("computeSyncOperations", () => {
         mappingId: "mapping-id-1",
         startTime: mapping.startTime,
         type: "remove",
-        uid: "legacy-uid@google.com",
+        uid: "legacy-uid@keeper.sh",
       },
     ]);
   });
@@ -359,8 +353,8 @@ describe("computeSyncOperations", () => {
   it("replaces a legacy uid mapping by the provider event id already listed remotely", () => {
     const event = createLocalEvent({});
     const mapping = createEventMapping({
-      deleteIdentifier: "legacy-uid@google.com",
-      destinationEventUid: "legacy-uid@google.com",
+      deleteIdentifier: "legacy-uid@keeper.sh",
+      destinationEventUid: "legacy-uid@keeper.sh",
       syncEventHash: createSyncEventContentHash(event),
     });
     const remoteEvent = createRemoteEvent({
@@ -377,7 +371,7 @@ describe("computeSyncOperations", () => {
     expect(operations[0]).toMatchObject({
       deleteId: "google-event-id",
       type: "replace",
-      uid: "legacy-uid@google.com",
+      uid: "legacy-uid@keeper.sh",
     });
   });
 
@@ -388,7 +382,7 @@ describe("computeSyncOperations", () => {
     });
     const mapping = createEventMapping({
       deleteIdentifier: "far-future-outlook-id",
-      destinationEventUid: "far-future-outlook-uid",
+      destinationEventUid: "far-future-outlook-uid@keeper.sh",
       endTime: event.endTime,
       startTime: event.startTime,
       syncEventHash: createSyncEventContentHash(event),
@@ -541,7 +535,7 @@ describe("computeSyncOperations", () => {
       startTime: new Date("2026-03-08T16:00:00.000Z"),
     });
     const mapping = createEventMapping({
-      destinationEventUid: "destination-uid-1",
+      destinationEventUid: "destination-uid-1@keeper.sh",
       syncEventHash: createSyncEventContentHash(previousEvent),
     });
     const remoteEvent = createRemoteEvent({
@@ -573,7 +567,7 @@ describe("computeSyncOperations", () => {
   it("restores a mapped event when the destination copy is moved by a user", () => {
     const event = createLocalEvent({});
     const mapping = createEventMapping({
-      destinationEventUid: "destination-uid-1",
+      destinationEventUid: "destination-uid-1@keeper.sh",
       endTime: event.endTime,
       startTime: event.startTime,
       syncEventHash: createSyncEventContentHash(event),
@@ -704,7 +698,7 @@ describe("computeSyncOperations", () => {
     });
     const mapping = createEventMapping({
       deleteIdentifier: "remote-delete-id-1",
-      destinationEventUid: "remote-uid-1",
+      destinationEventUid: "remote-uid-1@keeper.sh",
       endTime: event.endTime,
       startTime: event.startTime,
       syncEventHash: createSyncEventContentHash(event),
@@ -726,7 +720,7 @@ describe("computeSyncOperations", () => {
     const event = createLocalEvent({ summary: "Authoritative title" });
     const mapping = createEventMapping({
       deleteIdentifier: "remote-delete-id-1",
-      destinationEventUid: "remote-uid-1",
+      destinationEventUid: "remote-uid-1@keeper.sh",
       endTime: event.endTime,
       startTime: event.startTime,
       syncEventHash: createSyncEventContentHash(event),
@@ -756,7 +750,7 @@ describe("computeSyncOperations", () => {
     const event = createLocalEvent({ availability: "oof" });
     const mapping = createEventMapping({
       deleteIdentifier: "remote-delete-id-1",
-      destinationEventUid: "remote-uid-1",
+      destinationEventUid: "remote-uid-1@keeper.sh",
       endTime: event.endTime,
       startTime: event.startTime,
       syncEventHash: createSyncEventContentHash(event),
@@ -784,7 +778,7 @@ describe("computeSyncOperations", () => {
     const event = createLocalEvent({ availability: "busy" });
     const mapping = createEventMapping({
       deleteIdentifier: "remote-delete-id-1",
-      destinationEventUid: "remote-uid-1",
+      destinationEventUid: "remote-uid-1@keeper.sh",
       endTime: event.endTime,
       startTime: event.startTime,
       syncEventHash: createSyncEventContentHash(event),
@@ -1008,7 +1002,7 @@ describe("computeSyncOperations", () => {
     const event = createLocalEvent({});
     const mapping = createEventMapping({
       deleteIdentifier: "canonical-delete-id",
-      destinationEventUid: "shared-remote-uid",
+      destinationEventUid: "shared-remote-uid@keeper.sh",
       endTime: event.endTime,
       startTime: event.startTime,
       syncEventHash: createSyncEventContentHash(event),

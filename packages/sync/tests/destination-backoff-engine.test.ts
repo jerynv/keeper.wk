@@ -190,7 +190,7 @@ const setProvider = (overrides: {
     pushEvents: overrides.pushEvents
       ?? ((events: MaterializedSyncableEvent[]) =>
         Promise.resolve(events.map((_event, index) => ({
-          remoteId: `remote-${index}`,
+          remoteId: `remote-${index}@keeper.sh`,
           success: true,
         })))),
   };
@@ -310,9 +310,9 @@ describe("a run that completes after its deadline has passed", () => {
     const startTime = new Date("2026-03-10T09:00:00.000Z");
     const event = makeEvent("ev-1", startTime);
     localEventsMock.mockImplementation(() => [event]);
-    mappingsMock.mockImplementation(() => [makeMapping("map-1", event, "remote-1")]);
+    mappingsMock.mockImplementation(() => [makeMapping("map-1", event, "remote-1@keeper.sh")]);
     setProvider({
-      listRemoteEvents: () => Promise.resolve([makeRemoteEvent("remote-1", startTime)]),
+      listRemoteEvents: () => Promise.resolve([makeRemoteEvent("remote-1@keeper.sh", startTime)]),
       pushEvents: () => Promise.reject(new Error("must not push an in-sync destination")),
     });
   };
@@ -372,7 +372,7 @@ describe("supersession part way through the remote operations", () => {
         pushCalls += 1;
         vi.setSystemTime(new Date(deadlineMs + 1));
         return Promise.resolve(events.map((_event, index) => ({
-          remoteId: `remote-${pushCalls}-${index}`,
+          remoteId: `remote-${pushCalls}-${index}@keeper.sh`,
           success: true,
         })));
       },
@@ -457,7 +457,7 @@ describe("recovery from the maximum backoff", () => {
     setProvider({
       pushEvents: (events) => Promise.resolve(events.map((_pushed, index) => {
         if (pushSucceeds) {
-          return { remoteId: `remote-${index}`, success: true };
+          return { remoteId: `remote-${index}@keeper.sh`, success: true };
         }
         return { success: false };
       })),
@@ -474,6 +474,16 @@ describe("recovery from the maximum backoff", () => {
   });
 });
 
+/*
+ * Unlinking a source leaves its event_mappings rows behind; those rows are what prove
+ * the mirrors are Keeper's to retire. A mirror with no row at all is never deleted.
+ */
+const retainedMappingsFor = (remote: RemoteEvent[]) => () =>
+  remote.map((event) => ({
+    ...makeMapping(`map-${event.uid}`, makeEvent(event.uid, event.startTime), event.uid),
+    sourceCalendarId: "unlinked-source",
+  }));
+
 describe("a destination whose sources were all unlinked", () => {
   it("removes the orphaned mirrors and clears the backoff, then stays quiet", async () => {
     const { database, row, writes } = createHarness({
@@ -483,8 +493,8 @@ describe("a destination whose sources were all unlinked", () => {
     });
     const orphanStart = new Date("2026-03-10T09:00:00.000Z");
     const remote = [
-      makeRemoteEvent("remote-1", orphanStart),
-      makeRemoteEvent("remote-2", orphanStart),
+      makeRemoteEvent("remote-1@keeper.sh", orphanStart),
+      makeRemoteEvent("remote-2@keeper.sh", orphanStart),
     ];
     setProvider({
       deleteEvents: (ids) => {
@@ -498,6 +508,7 @@ describe("a destination whose sources were all unlinked", () => {
       },
       listRemoteEvents: () => Promise.resolve([...remote]),
     });
+    mappingsMock.mockImplementation(retainedMappingsFor(remote));
 
     const first = await syncDestinationsForUser(USER_ID, config(database));
     expect(first.removed).toBe(2);
@@ -518,8 +529,11 @@ describe("a destination whose sources were all unlinked", () => {
         error: "500 provider error",
         success: false,
       }))),
-      listRemoteEvents: () => Promise.resolve([makeRemoteEvent("remote-1", orphanStart)]),
+      listRemoteEvents: () => Promise.resolve([makeRemoteEvent("remote-1@keeper.sh", orphanStart)]),
     });
+    mappingsMock.mockImplementation(
+      retainedMappingsFor([makeRemoteEvent("remote-1@keeper.sh", orphanStart)]),
+    );
 
     await syncDestinationsForUser(USER_ID, config(database));
     expect(writes).toHaveLength(1);
@@ -660,9 +674,9 @@ describe("a single permanently rejected event", () => {
         if (event.id === "ev-poison") {
           return { error: "400 malformed payload", success: false };
         }
-        mappings.push(makeMapping("map-good", goodEvent, "remote-good"));
-        remote.push(makeRemoteEvent("remote-good", goodStart));
-        return { remoteId: "remote-good", success: true };
+        mappings.push(makeMapping("map-good", goodEvent, "remote-good@keeper.sh"));
+        remote.push(makeRemoteEvent("remote-good@keeper.sh", goodStart));
+        return { remoteId: "remote-good@keeper.sh", success: true };
       })),
     });
 

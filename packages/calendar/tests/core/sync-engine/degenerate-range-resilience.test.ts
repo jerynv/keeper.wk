@@ -126,7 +126,7 @@ const createGoogleHarness = (options: HarnessOptions): Harness => {
       if (options.failPush?.(counters.pushAttempts) ?? false) {
         return { error: "backendError", success: false as const };
       }
-      const uid = `keeper-${event.id}`;
+      const uid = `keeper-${event.id}@keeper.sh`;
       const payload = serializeGoogleEvent(event, uid);
       if (!payload) {
         return { error: "not serializable", success: false as const };
@@ -232,8 +232,14 @@ describe("degenerate range mirroring under partial failure", () => {
     const third = await harness.runSync();
     const fourth = await harness.runSync();
 
+    /*
+     * The stranded first copy has no mapping row during the second run, so it is left
+     * alone; once the re-push records a mapping for the same keeper uid, the third run
+     * removes it as a duplicate of a mapped uid. One run later than upstream's orphan
+     * cleanup, never touching a uid no mapping row records.
+     */
     expect(second.added).toBe(1);
-    expect(third).toMatchObject({ added: 0, removed: 0 });
+    expect(third).toMatchObject({ added: 0, removed: 1 });
     expect(fourth).toMatchObject({ added: 0, removed: 0 });
     expect(harness.stored.size).toBe(1);
     expect(harness.mappings).toHaveLength(1);

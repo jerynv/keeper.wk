@@ -9,6 +9,7 @@ import {
   createEditableEventContentSnapshot,
   createSyncEventContentHash,
 } from "../events/content-hash";
+import { isKeeperEvent } from "../events/identity";
 import { overlapsTimeWindow } from "../events/time-range";
 import type { SyncWindow } from "./sync-range";
 
@@ -595,12 +596,19 @@ const buildRemoveOperations = (
     }
   }
 
+  /*
+   * A remote copy no mapping row points at is deleted only when its uid is one a mapping
+   * row records: a duplicate of Keeper's own mirror (Google can hold two copies of one
+   * iCalUID). An unmapped uid, even one carrying the keeper marker, may belong to another
+   * Keeper instance pushing to the same calendar, so it is never touched.
+   */
+  const mappedUids = new Set(existingMappings.map((mapping) => mapping.destinationEventUid));
   for (const remoteEvent of remoteEvents) {
     if (mappedRemoteIdentities.has(`${remoteEvent.uid}\u0000${remoteEvent.deleteId}`)) {
       continue;
     }
 
-    if (!remoteEvent.isKeeperEvent) {
+    if (!remoteEvent.isKeeperEvent || !mappedUids.has(remoteEvent.uid)) {
       continue;
     }
 
@@ -625,6 +633,32 @@ const buildRemoveOperations = (
   }
 
   return operations;
+};
+
+/*
+ * The fork's invariant: Keeper never deletes or modifies a destination event it did not
+ * create. Every remove and replace already comes from a mapping row; this is the other
+ * half of the proof. A destination uid without the keeper marker means the mapping is
+ * corrupt or foreign, and Google deletes by opaque event id with no marker check of its
+ * own, so the operation is withheld here and the mapping is left exactly as it is.
+ */
+const withholdUnprovableDeletions = (
+  operations: SyncOperation[],
+): { allowed: SyncOperation[]; withheldMappingIds: Set<string> } => {
+  const allowed: SyncOperation[] = [];
+  const withheldMappingIds = new Set<string>();
+  for (const operation of operations) {
+    if (operation.type === "add" || isKeeperEvent(operation.uid)) {
+      allowed.push(operation);
+      continue;
+    }
+    if (operation.type === "replace") {
+      withheldMappingIds.add(operation.staleMappingId);
+    } else if (operation.mappingId) {
+      withheldMappingIds.add(operation.mappingId);
+    }
+  }
+  return { allowed, withheldMappingIds };
 };
 
 const computeSyncOperations = (
@@ -768,14 +802,17 @@ const computeSyncOperations = (
     scope,
   );
 
+  const { allowed, withheldMappingIds } = withholdUnprovableDeletions([
+    ...addOperations,
+    ...removeOperations,
+    ...replacementOperations,
+    ...reassignmentOperations,
+  ]);
+
   return {
-    mappingUpdates: [...mappingUpdatesById.values()],
-    operations: sortOperationsByTime([
-      ...addOperations,
-      ...removeOperations,
-      ...replacementOperations,
-      ...reassignmentOperations,
-    ]),
+    mappingUpdates: [...mappingUpdatesById.values()]
+      .filter((update) => !withheldMappingIds.has(update.id)),
+    operations: sortOperationsByTime(allowed),
     staleReasonCounts: {
       ...staleReasonCounts,
       occurrenceReassigned: remoteReassignments.length,
@@ -783,7 +820,7 @@ const computeSyncOperations = (
     staleMappingIds: [
       ...staleMappingIds,
       ...remoteReassignments.map(({ mapping }) => mapping.id),
-    ],
+    ].filter((mappingId) => !withheldMappingIds.has(mappingId)),
   };
 };
 
@@ -793,6 +830,7 @@ export {
   buildRemoveOperationsForMappings,
   buildReplacementOperations,
   computeSyncOperations,
+  withholdUnprovableDeletions,
   identifyStaleMappings,
   matchRemoteEventsToMappings,
   pairReidentifiedMaterializedOccurrences,
