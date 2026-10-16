@@ -1,4 +1,4 @@
-import { isDatabaseError } from "@keeper.sh/database";
+import { isDatabaseError, isDatabaseErrorLink } from "@keeper.sh/database";
 
 const AUTH_ERROR_STATUS_CODES = new Set([401]);
 
@@ -19,22 +19,14 @@ const CALDAV_NON_AUTH_ERROR_NAMES = new Set(["CalDAVWithheldCredentialsError"]);
 const HTTP_FAILURE_STATUS_PATTERN =
   /(?:\bhttp\/\d(?:\.\d)?\s+|\bstatus(?:\s*code)?\b\s*[:=]?\s*|\bfailed\b\s*(?:with\s+)?[:=]?\s*)([45]\d{2})(?!\d)/gi;
 
-const SQLSTATE_PATTERN = /^[0-9A-Z]{5}$/;
-
-const DATABASE_ERROR_NAMES = new Set(["DrizzleQueryError", "PostgresError"]);
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
-const hasSqlState = (value: unknown): boolean =>
-  typeof value === "string" && SQLSTATE_PATTERN.test(value);
-
-const isDatabaseFailure = (value: Record<string, unknown>): boolean => {
-  if (typeof value.name === "string" && DATABASE_ERROR_NAMES.has(value.name)) {
-    return true;
-  }
-  return hasSqlState(value.errno) || hasSqlState(value.code);
-};
+/*
+ * Checked at every node the walk visits, not only along cause links: a database error
+ * carried in an `error` or `errors` field still inlines bound values in its message.
+ */
+const isDatabaseFailure = (value: Record<string, unknown>): boolean => isDatabaseErrorLink(value);
 
 const toStatusCode = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isInteger(value)) {

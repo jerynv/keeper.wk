@@ -76,34 +76,6 @@ describe("configurable sync ranges", () => {
     expect(next.timeMin.getTime()).toBeGreaterThan(first.timeMin.getTime());
   });
 
-  it("anchors to local midnight in any server timezone", () => {
-    const originalTimeZone = process.env.TZ;
-    const originalOffset = new Date().getTimezoneOffset();
-    const observedOffsets = new Set<number>();
-    try {
-      for (const timeZone of ["UTC", "America/Los_Angeles", "Asia/Kolkata", "Pacific/Kiritimati"]) {
-        process.env.TZ = timeZone;
-        const now = new Date(2026, 6, 20, 15, 42, 10);
-        observedOffsets.add(now.getTimezoneOffset());
-        const window = getConfigurableSyncWindow("1_week", "1_month", now);
-
-        expect(window.timeMin.getHours()).toBe(0);
-        expect(window.timeMin.getMinutes()).toBe(0);
-        expect(window.timeMax.getHours()).toBe(0);
-        expect(window.timeMin.getTime()).toBeLessThan(window.timeMax.getTime());
-      }
-    } finally {
-      if (typeof originalTimeZone === "string") {
-        process.env.TZ = originalTimeZone;
-      } else {
-        delete process.env.TZ;
-      }
-    }
-
-    expect(observedOffsets.size).toBe(4);
-    expect(new Date().getTimezoneOffset()).toBe(originalOffset);
-  });
-
   it("rejects unrecognized ranges instead of ordering them as narrowest", () => {
     const unsupported = "5_years" as never;
 

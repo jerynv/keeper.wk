@@ -208,7 +208,6 @@ const config = (database: unknown, overrides: Record<string, unknown> = {}) => (
   database: database as never,
   redis: {} as never,
   oauthConfig: {} as never,
-  plan: "pro" as never,
   ...overrides,
 });
 

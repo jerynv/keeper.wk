@@ -65,21 +65,17 @@ describe("resolveSyncProvider CalDAV destination outbound fetch", () => {
 
   it("refuses to reach a loopback CalDAV server with the options the destination path builds", async () => {
     const options = await resolveCalDAVSafeFetchOptions();
-
-    const server = Bun.serve({
-      hostname: "127.0.0.1",
-      port: 0,
-      fetch: () => new Response("INTERNAL-SECRET"),
-    });
-
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("INTERNAL-SECRET"));
     const safeFetch = createSafeFetch(options);
 
     try {
-      await expect(safeFetch(`http://127.0.0.1:${server.port}/dav/`)).rejects.toThrow(
+      await expect(safeFetch("http://127.0.0.1:5232/dav/")).rejects.toThrow(
         /private or reserved network address/,
       );
+      // Refused before any connection: nothing was ever asked of the network.
+      expect(fetchSpy).not.toHaveBeenCalled();
     } finally {
-      server.stop(true);
+      fetchSpy.mockRestore();
     }
   });
 });

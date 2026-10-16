@@ -1,4 +1,4 @@
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
+import type { Database } from "@keeper.sh/database";
 import type { IcsDuration, IcsExceptionDates, IcsRecurrenceRule } from "ts-ics";
 import type { EditableEventContentSnapshot } from "./events/content-hash";
 import type { RefreshLockStore } from "./oauth/refresh-coordinator";
@@ -174,7 +174,7 @@ type BroadcastSyncStatus = (
 ) => void;
 
 interface ProviderConfig {
-  database: BunSQLDatabase;
+  database: Database;
   userId: string;
   calendarId: string;
   broadcastSyncStatus?: BroadcastSyncStatus;

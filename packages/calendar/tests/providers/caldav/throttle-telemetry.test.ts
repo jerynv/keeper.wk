@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { widelog, widelogger } from "widelogger";
+import { beforeEach, describe, expect, it } from "vitest";
+import { widelog, widelogger } from "../../../src/core/telemetry/widelog";
 import {
   CALDAV_MAX_THROTTLE_RETRIES,
   fetchHonouringRetryAfter,
@@ -17,29 +17,19 @@ interface EmittedEvent {
   wait?: { provider_retry_ms?: number };
 }
 
+const emitted: EmittedEvent[] = [];
+
 const { context } = widelogger({
   defaultEventName: "wide_event",
   environment: "production",
   service: "calendar-test",
+  transport: (event) => {
+    emitted.push(event as EmittedEvent);
+  },
 });
-
-const emitted: EmittedEvent[] = [];
-const originalWrite = process.stdout.write.bind(process.stdout);
 
 beforeEach(() => {
   emitted.length = 0;
-  process.stdout.write = ((chunk: unknown) => {
-    for (const line of String(chunk).split("\n")) {
-      if (line.trim().length > 0) {
-        emitted.push(JSON.parse(line) as EmittedEvent);
-      }
-    }
-    return true;
-  }) as typeof process.stdout.write;
-});
-
-afterEach(() => {
-  process.stdout.write = originalWrite;
 });
 
 const FLOOR_MS = 2000;

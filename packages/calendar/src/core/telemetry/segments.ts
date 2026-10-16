@@ -1,4 +1,4 @@
-import { widelog } from "widelogger";
+import { widelog } from "./widelog";
 
 /**
  * Every wait and work key below is a disjoint wall-clock slice of the per-source

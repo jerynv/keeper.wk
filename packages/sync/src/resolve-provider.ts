@@ -1,3 +1,4 @@
+import type { Database } from "@keeper.sh/database";
 import type { CalendarSyncProvider, RefreshLockStore } from "@keeper.sh/calendar";
 import type { SafeFetchOptions } from "@keeper.sh/calendar/safe-fetch";
 import type { RequestRateLimiter } from "@keeper.sh/calendar";
@@ -19,7 +20,6 @@ import {
   oauthCredentialsTable,
 } from "@keeper.sh/database/schema";
 import { eq } from "drizzle-orm";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
 
 const OAUTH_PROVIDERS = new Set(["google", "outlook"]);
 const CALDAV_PROVIDERS = new Set(["caldav", "fastmail", "icloud"]);
@@ -32,7 +32,7 @@ interface OAuthConfig {
 }
 
 const resolveOAuthProvider = async (
-  database: BunSQLDatabase,
+  database: Database,
   provider: string,
   calendarId: string,
   userId: string,
@@ -118,7 +118,7 @@ const resolveOAuthProvider = async (
 };
 
 const resolveCalDAVProvider = async (
-  database: BunSQLDatabase,
+  database: Database,
   calendarId: string,
   encryptionKey: string,
   safeFetchOptions?: SafeFetchOptions,
@@ -160,7 +160,7 @@ const resolveCalDAVProvider = async (
 };
 
 interface ResolveProviderOptions {
-  database: BunSQLDatabase;
+  database: Database;
   provider: string;
   calendarId: string;
   userId: string;

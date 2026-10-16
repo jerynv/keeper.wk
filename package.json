@@ -1,6 +1,9 @@
 {
   "name": "keeper-cf",
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.0",
+    "@cloudflare/workers-types": "5.20261008.1",
+    "@types/node": "25.0.9",
     "knip": "5.80.0",
     "oxlint": "^1.55.0",
     "rimraf": "^6.1.3",

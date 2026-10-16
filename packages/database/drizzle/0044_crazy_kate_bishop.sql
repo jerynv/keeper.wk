@@ -1,1 +1,0 @@
-ALTER TABLE "calendars" ADD COLUMN "excludeAllDayEvents" boolean DEFAULT false NOT NULL;

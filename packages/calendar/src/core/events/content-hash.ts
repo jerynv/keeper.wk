@@ -1,6 +1,7 @@
 import type { SyncableEvent } from "../types";
 import { resolveIsAllDayEvent } from "./all-day";
 import stringify from "fast-json-stable-stringify";
+import { sha256Hex } from "../utils/sha256";
 
 type SyncableEventContent = Pick<SyncableEvent, "summary" | "description" | "location">
   & Partial<Pick<
@@ -57,7 +58,7 @@ const createSyncEventContentHash = (event: SyncableEventContent): string => {
     ...resolveHashedPrivacy(event.isPrivate),
   ]);
 
-  return new Bun.CryptoHasher("sha256").update(payload).digest("hex");
+  return sha256Hex(payload);
 };
 
 interface EditableEventContentSnapshot {
@@ -84,7 +85,7 @@ const hashEditableEventContentSnapshot = (snapshot: EditableEventContentSnapshot
     snapshot.isAllDay,
   ]);
 
-  return new Bun.CryptoHasher("sha256").update(payload).digest("hex");
+  return sha256Hex(payload);
 };
 
 const createEditableEventContentHash = (event: SyncableEventContent): string =>

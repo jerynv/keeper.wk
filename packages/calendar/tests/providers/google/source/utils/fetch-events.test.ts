@@ -52,7 +52,6 @@ const createFetchQueue = (
     return Promise.resolve(nextResponse);
   };
 
-  queuedFetch.preconnect = originalFetch.preconnect;
   return queuedFetch;
 };
 

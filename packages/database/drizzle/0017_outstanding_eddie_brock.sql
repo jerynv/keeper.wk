@@ -1,1 +1,0 @@
-ALTER TABLE "passkey" ADD COLUMN "credentialID" text NOT NULL;

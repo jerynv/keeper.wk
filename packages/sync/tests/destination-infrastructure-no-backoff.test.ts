@@ -142,7 +142,6 @@ const config = (database: unknown) => ({
   database: database as never,
   redis: {} as never,
   oauthConfig: {} as never,
-  plan: "pro" as never,
 });
 
 beforeEach(() => {

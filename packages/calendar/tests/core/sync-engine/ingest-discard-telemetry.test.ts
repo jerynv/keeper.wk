@@ -73,7 +73,6 @@ const originalFetch = globalThis.fetch;
 
 const respondWith = (body: unknown): void => {
   const stub = (): Promise<Response> => Promise.resolve(Response.json(body));
-  stub.preconnect = originalFetch.preconnect;
   globalThis.fetch = stub;
 };
 

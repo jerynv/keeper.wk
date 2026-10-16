@@ -1,1 +1,0 @@
-ALTER TABLE "remote_ical_sources" ADD COLUMN "deletedAt" timestamp;

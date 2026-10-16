@@ -9,7 +9,7 @@
   "scripts": {
     "types": "tsc --noEmit",
     "lint": "oxlint .",
-    "test": "bun x --bun vitest run"
+    "test": "vitest run"
   },
   "dependencies": {
     "@keeper.sh/calendar": "workspace:*",
@@ -19,8 +19,10 @@
     "drizzle-orm": "0.45.2"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.0",
+    "@cloudflare/workers-types": "5.20261008.1",
     "@keeper.sh/typescript-config": "workspace:*",
-    "@types/bun": "latest",
+    "@types/node": "25.0.9",
     "typescript": "5.9.3",
     "vitest": "^4.1.4"
   }

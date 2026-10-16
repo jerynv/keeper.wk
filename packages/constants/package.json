@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@keeper.sh/typescript-config": "workspace:*",
-    "@types/bun": "latest",
+    "@types/node": "25.0.9",
     "typescript": "5.9.3"
   }
 }

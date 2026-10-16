@@ -1,13 +1,15 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["import", "typescript", "unicorn", "promise"],
+  "plugins": [
+    "import",
+    "typescript",
+    "unicorn",
+    "promise"
+  ],
   "env": {
     "browser": true,
     "node": true,
     "es2024": true
-  },
-  "globals": {
-    "Bun": "readonly"
   },
   "categories": {
     "correctness": "error",
@@ -18,7 +20,10 @@
     "restriction": "error"
   },
   "rules": {
-    "eqeqeq": ["error", "always"],
+    "eqeqeq": [
+      "error",
+      "always"
+    ],
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/consistent-type-imports": "error",
@@ -61,7 +66,15 @@
     "max-classes-per-file": "off",
     "sort-imports": "off",
     "sort-keys": "off",
-    "id-length": ["error", { "exceptions": ["x", "y"] }]
+    "id-length": [
+      "error",
+      {
+        "exceptions": [
+          "x",
+          "y"
+        ]
+      }
+    ]
   },
   "ignorePatterns": [
     "**/node_modules/**",
@@ -69,5 +82,15 @@
     "**/.next/**",
     "**/.turbo/**",
     "**/coverage/**"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "packages/calendar/src/core/telemetry/widelog.ts"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
   ]
 }

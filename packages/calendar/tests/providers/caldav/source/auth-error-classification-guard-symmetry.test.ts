@@ -2,12 +2,9 @@ import { isDatabaseError } from "@keeper.sh/database";
 import { describe, expect, it } from "vitest";
 import { isCalDAVAuthenticationError } from "../../../../src/providers/caldav/source/auth-error-classification";
 
+// Our own database refusing us, worded the way an auth failure is: never a CalDAV auth failure.
 const passwordAuthFailure = (): Error =>
-  Object.assign(new Error('password authentication failed for user "keeper"'), {
-    code: "ERR_POSTGRES_SERVER_ERROR",
-    errno: "28P01",
-    name: "PostgresError",
-  });
+  new Error("D1_ERROR: not authorized: SQLITE_AUTH (authentication failed)");
 
 const wrapInCauses = (error: unknown, layers: number): unknown => {
   let wrapped = error;
@@ -17,7 +14,7 @@ const wrapInCauses = (error: unknown, layers: number): unknown => {
   return wrapped;
 };
 
-describe("isCalDAVAuthenticationError never claims a Postgres failure", () => {
+describe("isCalDAVAuthenticationError never claims a database failure", () => {
   it("stays false at every cause depth the wide event can carry", () => {
     const depths = [0, 1, 2, 3, 4, 5, 6, 7];
 
@@ -33,7 +30,7 @@ describe("isCalDAVAuthenticationError never claims a Postgres failure", () => {
       .toEqual(chains.map(() => true));
   });
 
-  it("stays false when the Postgres failure is carried outside the cause chain", () => {
+  it("stays false when the database failure is carried outside the cause chain", () => {
     const shapes: unknown[] = [
       Object.assign(new Error("caldav ingest failed"), { error: passwordAuthFailure() }),
       Object.assign(new Error("caldav ingest failed"), { errors: [passwordAuthFailure()] }),

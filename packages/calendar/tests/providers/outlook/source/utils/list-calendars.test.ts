@@ -51,7 +51,6 @@ const mockCalendarListResponse = (
   calendars: { id: string; name: string; owner?: { name?: string; address?: string } }[],
 ): void => {
   const mockFetch = (): Promise<Response> => Promise.resolve(Response.json({ value: calendars }));
-  mockFetch.preconnect = originalFetch.preconnect;
   globalThis.fetch = mockFetch;
 };
 

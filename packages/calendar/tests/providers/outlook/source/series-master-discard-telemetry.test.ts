@@ -35,7 +35,6 @@ const originalFetch = globalThis.fetch;
 const respondByUrl = (responder: (url: string) => unknown): void => {
   const stub = (input: string | URL | Request): Promise<Response> =>
     Promise.resolve(Response.json(responder(String(input))));
-  stub.preconnect = originalFetch.preconnect;
   globalThis.fetch = stub as unknown as typeof globalThis.fetch;
 };
 

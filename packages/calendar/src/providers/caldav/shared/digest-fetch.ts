@@ -1,5 +1,6 @@
 import { createDigestClient, selectChallenge } from "@keeper.sh/digest-fetch";
 import { recordRequest } from "./response-status-scope";
+import { encodeBase64 } from "../../../core/utils/base64";
 
 type FetchFunction = (input: string | Request | URL, init?: RequestInit) => Promise<Response>;
 
@@ -13,7 +14,7 @@ interface DigestFetchCredentials {
 }
 
 const encodeBasicCredentials = (username: string, password: string): string => {
-  const encoded = Buffer.from(`${username}:${password}`).toString("base64");
+  const encoded = encodeBase64(`${username}:${password}`);
   return `Basic ${encoded}`;
 };
 

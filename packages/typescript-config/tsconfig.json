@@ -12,8 +12,14 @@
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
     "target": "ESNext",
-    "lib": ["ESNext"],
-    "types": ["bun"],
+    "lib": [
+      "ESNext"
+    ],
+    "types": [
+      "@cloudflare/workers-types",
+      "@cloudflare/vitest-plugin/types",
+      "node"
+    ],
     "jsx": "react-jsx",
     "skipLibCheck": true
   }

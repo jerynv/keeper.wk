@@ -1,4 +1,4 @@
-import { widelog } from "widelogger";
+import { widelog } from "../../../core/telemetry/widelog";
 import { measureSegment } from "../../../core/telemetry/segments";
 import { isThrottleStatus, MAX_RETRY_AFTER_MS, parseRetryAfterMs } from "../../../core/utils/retry-after";
 

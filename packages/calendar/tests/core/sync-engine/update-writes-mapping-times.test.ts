@@ -1,4 +1,7 @@
+import { eventMappingsTable } from "@keeper.sh/database/schema";
+import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
+import { seedCalendar, testDatabase } from "../../support/d1";
 import { createDatabaseFlush } from "../../../src/core/sync-engine/flush";
 import { executeRemoteOperations } from "../../../src/core/sync-engine/index";
 import { computeSyncOperations } from "../../../src/core/sync/operations";
@@ -58,26 +61,38 @@ type MappingColumnValues = Partial<Pick<
   "deleteIdentifier" | "endTime" | "startTime" | "syncEventHash" | "syncEventId"
 >>;
 
-const flushUpdatesAgainstRecorder = async (
+/*
+ * Runs the real flush against D1 and reads the row back, so the assertion is about
+ * what was stored, not about which builder calls were made.
+ */
+const flushUpdatesAgainstDatabase = async (
+  mapping: EventMapping,
   changes: PendingChanges,
 ): Promise<MappingColumnValues[]> => {
-  const setValues: MappingColumnValues[] = [];
-  const fakeDatabase = {
-    transaction: (callback: (transaction: unknown) => Promise<void>) => callback({
-      delete: () => ({ where: () => Promise.resolve() }),
-      insert: () => ({ values: () => ({ onConflictDoNothing: () => Promise.resolve() }) }),
-      update: () => ({
-        set: (values: MappingColumnValues) => {
-          setValues.push(values);
-          return { where: () => Promise.resolve() };
-        },
-      }),
-    }),
-  };
+  const database = testDatabase();
+  await seedCalendar(database, { capabilities: ["pull", "push"], id: mapping.calendarId });
+  await database.insert(eventMappingsTable).values({ ...mapping, eventStateId: null });
 
-  await createDatabaseFlush(fakeDatabase as never)(changes);
+  await createDatabaseFlush(database)(changes);
 
-  return setValues;
+  const rows = await database
+    .select({
+      deleteIdentifier: eventMappingsTable.deleteIdentifier,
+      endTime: eventMappingsTable.endTime,
+      startTime: eventMappingsTable.startTime,
+      syncEventHash: eventMappingsTable.syncEventHash,
+      syncEventId: eventMappingsTable.syncEventId,
+    })
+    .from(eventMappingsTable)
+    .where(eq(eventMappingsTable.id, mapping.id));
+  // Nullable in storage; a flushed update always writes all five.
+  return rows.map((row) => ({
+    endTime: row.endTime,
+    startTime: row.startTime,
+    syncEventHash: row.syncEventHash,
+    ...(row.deleteIdentifier !== null && { deleteIdentifier: row.deleteIdentifier }),
+    ...(row.syncEventId !== null && { syncEventId: row.syncEventId }),
+  }));
 };
 
 describe("in-place update mapping times", () => {
@@ -138,10 +153,10 @@ describe("in-place update mapping times", () => {
     );
     expect(updateRun.changes.updates).toHaveLength(1);
 
-    const setValues = await flushUpdatesAgainstRecorder(updateRun.changes);
+    const setValues = await flushUpdatesAgainstDatabase(mapping, updateRun.changes);
     const [written] = setValues;
     if (!written) {
-      throw new Error("expected the flush to issue one mapping update");
+      throw new Error("expected the flushed mapping row to exist");
     }
     expect(written.startTime).toEqual(MOVED_START);
     expect(written.endTime).toEqual(MOVED_END);

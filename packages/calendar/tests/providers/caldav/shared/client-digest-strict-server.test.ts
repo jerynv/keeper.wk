@@ -1,4 +1,5 @@
-import { CryptoHasher } from "bun";
+import { md5 as md5Hash } from "@noble/hashes/legacy.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CalDAVAuthenticationError, CalDAVClient } from "../../../../src/providers/caldav/shared/client";
 
@@ -29,7 +30,7 @@ const staleDirectiveFor = (stale: boolean): string => {
   return "";
 };
 
-const md5 = (value: string): string => new CryptoHasher("md5").update(value).digest("hex");
+const md5 = (value: string): string => bytesToHex(md5Hash(utf8ToBytes(value)));
 
 const multistatus = (body: string): Response =>
   new Response(

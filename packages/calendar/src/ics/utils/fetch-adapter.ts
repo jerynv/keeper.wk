@@ -1,3 +1,4 @@
+import type { Database } from "@keeper.sh/database";
 import type { SourceEvent } from "../../core/types";
 import type { FetchEventsResult } from "../../core/sync-engine/ingest";
 import type { SafeFetchOptions } from "../../utils/safe-fetch";
@@ -6,7 +7,6 @@ import { parseIcsCalendarLenient } from "./lenient-parser";
 import { parseIcsEventsWithDiagnostics } from "./parse-ics-events";
 import { pullRemoteCalendar } from "./pull-remote-calendar";
 import { prepareCalendarSnapshot } from "./create-snapshot";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
 import type { SourceIngestionPlan } from "../../core/sync/sync-range";
 import { normalizeTimezone } from "./normalize-timezone";
 import {
@@ -24,7 +24,7 @@ import { measureProviderRequest, measureSyncSegment } from "../../core/telemetry
 interface IcsSourceFetcherConfig {
   calendarId: string;
   url: string;
-  database: BunSQLDatabase;
+  database: Database;
   safeFetchOptions?: SafeFetchOptions;
   plan: SourceIngestionPlan;
 }

@@ -14,6 +14,7 @@ import {
 import { overlapsTimeWindow } from "./time-range";
 import { resolveIsAllDayEvent } from "./all-day";
 import { MS_PER_DAY } from "@keeper.sh/constants";
+import { sha256Hex } from "../utils/sha256";
 
 interface RecurrenceMaterializationWindow {
   start: Date;
@@ -252,7 +253,7 @@ const createSyntheticOccurrenceId = (
     occurrenceStart.toISOString(),
     occurrenceEnd.toISOString(),
   ]);
-  const hash = new Bun.CryptoHasher("sha256").update(seed).digest("hex");
+  const hash = sha256Hex(seed);
 
   return `recurrence-${hash}`;
 };

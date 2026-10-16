@@ -31,7 +31,6 @@ const createFetchMock = (
   handler: (input: unknown, init?: RequestInit) => Promise<Response>,
 ): typeof fetch => {
   const fetchMock: typeof fetch = (input, init) => handler(input, init);
-  fetchMock.preconnect = originalFetch.preconnect;
   return fetchMock;
 };
 

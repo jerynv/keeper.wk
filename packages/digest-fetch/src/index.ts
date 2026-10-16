@@ -1,7 +1,8 @@
-import { CryptoHasher } from "bun";
+import { md5 as md5Hash } from "@noble/hashes/legacy.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
-const md5 = (data: string): string =>
-  new CryptoHasher("md5").update(data).digest("hex");
+// HTTP Digest auth still specifies MD5; Web Crypto has none, and it must be synchronous.
+const md5 = (data: string): string => bytesToHex(md5Hash(utf8ToBytes(data)));
 
 interface AuthChallenge {
   scheme: string;

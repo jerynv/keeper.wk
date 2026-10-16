@@ -16,5 +16,10 @@
     "packages/*": {
       "project": "src/**/*.{ts,tsx}"
     }
-  }
+  },
+  "ignoreDependencies": [
+    "cloudflare",
+    "@cloudflare/workers-types",
+    "@cloudflare/vitest-plugin"
+  ]
 }

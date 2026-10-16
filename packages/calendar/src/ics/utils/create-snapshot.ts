@@ -1,6 +1,6 @@
+import type { Database } from "@keeper.sh/database";
 import { calendarSnapshotsTable, calendarsTable } from "@keeper.sh/database/schema";
 import { eq } from "drizzle-orm";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
 import type { CalendarSnapshotChange } from "../../core/sync-engine/ingest";
 
 const computeContentHash = async (content: string): Promise<string> => {
@@ -40,7 +40,7 @@ const prepareCalendarSnapshotChange = async (
 };
 
 const prepareCalendarSnapshot = async (
-  database: BunSQLDatabase,
+  database: Database,
   calendarId: string,
   ical: string,
 ): Promise<PrepareSnapshotResult> => {
@@ -61,29 +61,35 @@ const prepareCalendarSnapshot = async (
   return prepareCalendarSnapshotChange(ical, true, existing?.contentHash);
 };
 
+// Only the hash is stored: the engine never reads the feed text back.
+const buildPersistCalendarSnapshot = (
+  database: Pick<Database, "insert">,
+  calendarId: string,
+  snapshot: CalendarSnapshotChange,
+) => database
+  .insert(calendarSnapshotsTable)
+  .values({
+    calendarId,
+    contentHash: snapshot.contentHash,
+  })
+  .onConflictDoUpdate({
+    target: calendarSnapshotsTable.calendarId,
+    set: {
+      contentHash: snapshot.contentHash,
+      createdAt: new Date(),
+    },
+  });
+
 const persistCalendarSnapshot = async (
-  database: Pick<BunSQLDatabase, "insert">,
+  database: Pick<Database, "insert">,
   calendarId: string,
   snapshot: CalendarSnapshotChange,
 ): Promise<void> => {
-  await database
-    .insert(calendarSnapshotsTable)
-    .values({
-      calendarId,
-      contentHash: snapshot.contentHash,
-      ical: snapshot.ical,
-    })
-    .onConflictDoUpdate({
-      target: calendarSnapshotsTable.calendarId,
-      set: {
-        contentHash: snapshot.contentHash,
-        createdAt: new Date(),
-        ical: snapshot.ical,
-      },
-    });
+  await buildPersistCalendarSnapshot(database, calendarId, snapshot);
 };
 
 export {
+  buildPersistCalendarSnapshot,
   persistCalendarSnapshot,
   prepareCalendarSnapshot,
   prepareCalendarSnapshotChange,

@@ -1,3 +1,5 @@
+import { chunkForParameters, runBatch } from "@keeper.sh/database";
+import type { Database } from "@keeper.sh/database";
 import {
   buildSourceEventStateIdsToRemove,
   buildSourceEventsToAdd,
@@ -8,14 +10,13 @@ import {
 } from "../../../core/source/stored-event-state";
 import {
   buildEventStateInsertRow,
-  insertEventStatesWithConflictResolution,
+  buildEventStateInsertStatements,
 } from "../../../core/source/write-event-states";
 import { buildCalDAVSourceEvents } from "./window";
 import type { SourceEvent } from "../../../core/types";
 import { REAUTHENTICATION_SOURCE_CREDENTIALS } from "@keeper.sh/constants";
 import { calendarAccountsTable, calendarsTable, eventStatesTable } from "@keeper.sh/database/schema";
 import { and, eq, inArray } from "drizzle-orm";
-import type { BunSQLClient } from "../../../core/database-client";
 import { CalDAVClient } from "../shared/client";
 import { resolveAuthMethod } from "../shared/digest-fetch";
 import {
@@ -110,7 +111,7 @@ const createCalDAVSourceProvider = (
   const processEvents = async (
     calendarId: string,
     events: SourceEvent[],
-    persistenceDatabase: BunSQLClient = database,
+    persistenceDatabase: Database = database,
   ): Promise<CalDAVSourceSyncResult> => {
     const storedEvents = await persistenceDatabase
       .select({
@@ -145,25 +146,21 @@ const createCalDAVSourceProvider = (
       eventStateIdsToRemove.length > EMPTY_COUNT
       || eventsToAdd.length > EMPTY_COUNT
     ) {
-      await persistenceDatabase.transaction(async (transaction) => {
-        if (eventStateIdsToRemove.length > EMPTY_COUNT) {
-          await transaction
-            .delete(eventStatesTable)
-            .where(
-              and(
-                eq(eventStatesTable.calendarId, calendarId),
-                inArray(eventStatesTable.id, eventStateIdsToRemove),
-              ),
-            );
-        }
-
-        if (eventsToAdd.length > EMPTY_COUNT) {
-          await insertEventStatesWithConflictResolution(
-            transaction,
-            eventsToAdd.map((event) => buildEventStateInsertRow(calendarId, event)),
-          );
-        }
-      });
+      // One batch, so the removals and additions land together.
+      await runBatch(persistenceDatabase, [
+        ...chunkForParameters(eventStateIdsToRemove, 1, 1).map((ids) => persistenceDatabase
+          .delete(eventStatesTable)
+          .where(
+            and(
+              eq(eventStatesTable.calendarId, calendarId),
+              inArray(eventStatesTable.id, ids),
+            ),
+          )),
+        ...buildEventStateInsertStatements(
+          persistenceDatabase,
+          eventsToAdd.map((event) => buildEventStateInsertRow(calendarId, event)),
+        ),
+      ]);
     }
 
     return {
@@ -175,7 +172,7 @@ const createCalDAVSourceProvider = (
 
   const refreshOriginalName = async (
     account: CalDAVSourceAccount,
-    persistenceDatabase: BunSQLClient = database,
+    persistenceDatabase: Database = database,
   ): Promise<void> => {
     if (account.originalName !== null) {
       return;

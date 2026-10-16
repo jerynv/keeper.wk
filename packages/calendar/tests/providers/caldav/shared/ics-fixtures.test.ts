@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { fixtureManifest, getFixturePath } from "@keeper.sh/fixtures";
+import { fixtureManifest, readFixture } from "@keeper.sh/fixtures";
 import { parseICalToRemoteEvent } from "../../../../src/providers/caldav/shared/ics";
 
 const enabledFixtures = fixtureManifest.filter((fixtureSource) => fixtureSource.enabled !== false);
 
 describe("parseICalToRemoteEvent fixtures", () => {
   for (const fixtureSource of enabledFixtures) {
-    it(`parses first event from ${fixtureSource.id}`, async () => {
-      const fixturePath = getFixturePath(fixtureSource);
-      const icsString = await Bun.file(fixturePath).text();
+    it(`parses first event from ${fixtureSource.id}`, () => {
+      const icsString = readFixture(fixtureSource);
 
       const parsedEvent = parseICalToRemoteEvent(icsString);
 

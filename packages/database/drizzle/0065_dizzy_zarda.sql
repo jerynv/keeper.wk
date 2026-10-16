@@ -1,1 +1,0 @@
-ALTER TABLE "calendars" ADD COLUMN "disabled" boolean DEFAULT false NOT NULL;

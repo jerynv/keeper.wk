@@ -1,65 +1,47 @@
-import { sql, type SQL } from "drizzle-orm";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
-import type { BunSQLClient, BunSQLTransactionClient } from "../database-client";
-import { INGEST_SOURCE_TIMEOUT_MS } from "@keeper.sh/constants";
+import { withLeases } from "@keeper.sh/database";
+import type { Database } from "@keeper.sh/database";
 
-const SOURCE_INGEST_LOCK_NAMESPACE = 9003;
+/*
+ * Upstream held pg_advisory_xact_lock(namespace, hashtext(calendarId)) for the length of
+ * a transaction. D1 has no interactive transactions, so the same mutual exclusion is a
+ * lease per source calendar: an ingest's persistence step and a
+ * destination's read of that source's events never interleave.
+ */
+const SOURCE_INGEST_LEASE_PREFIX = "source-ingest:";
+// How long to wait for another run to finish with a source before giving up this one.
 const SOURCE_INGEST_LOCK_TIMEOUT_MS = 30_000;
-const SOURCE_INGEST_IDLE_TIMEOUT_GRACE_MS = 5000;
+// A crashed holder's lease frees itself after this; a live one finishes well inside it.
+const SOURCE_INGEST_LEASE_TTL_MS = 120_000;
 
-interface IngestLockTransaction {
-  execute(query: SQL): PromiseLike<unknown>;
-}
-
-const acquireSourceIngestLocks = async <
-  TResult,
-  TTransaction extends IngestLockTransaction,
->(
-  transaction: TTransaction,
-  calendarIds: string[],
-  work: (lockedDatabase: TTransaction) => Promise<TResult>,
-): Promise<TResult> => {
-  await transaction.execute(sql`select set_config(
-    'statement_timeout',
-    ${String(SOURCE_INGEST_LOCK_TIMEOUT_MS)},
-    true
-  )`);
-  await transaction.execute(sql`select set_config(
-    'idle_in_transaction_session_timeout',
-    ${String(INGEST_SOURCE_TIMEOUT_MS + SOURCE_INGEST_IDLE_TIMEOUT_GRACE_MS)},
-    true
-  )`);
-  for (const calendarId of calendarIds) {
-    await transaction.execute(
-      sql`select pg_advisory_xact_lock(${SOURCE_INGEST_LOCK_NAMESPACE}, hashtext(${calendarId}))`,
-    );
-  }
-  return work(transaction);
-};
+const toSourceIngestLeaseKey = (calendarId: string): string =>
+  `${SOURCE_INGEST_LEASE_PREFIX}${calendarId}`;
 
 const withSourceIngestLocks = <TResult>(
-  database: BunSQLDatabase,
+  database: Database,
   calendarIds: string[],
-  work: (lockedDatabase: BunSQLClient) => Promise<TResult>,
+  work: (lockedDatabase: Database) => Promise<TResult>,
 ): Promise<TResult> => {
-  const orderedCalendarIds = [...new Set(calendarIds)].toSorted();
-  if (orderedCalendarIds.length === 0) {
+  if (calendarIds.length === 0) {
     return work(database);
   }
-  return database.transaction((transaction: BunSQLTransactionClient) =>
-    acquireSourceIngestLocks(transaction, orderedCalendarIds, work));
+  return withLeases(
+    database,
+    calendarIds.map((calendarId) => toSourceIngestLeaseKey(calendarId)),
+    { ttlMs: SOURCE_INGEST_LEASE_TTL_MS, waitMs: SOURCE_INGEST_LOCK_TIMEOUT_MS },
+    () => work(database),
+  );
 };
 
 const withSourceIngestLock = <TResult>(
-  database: BunSQLDatabase,
+  database: Database,
   calendarId: string,
-  work: (lockedDatabase: BunSQLClient) => Promise<TResult>,
+  work: (lockedDatabase: Database) => Promise<TResult>,
 ): Promise<TResult> => withSourceIngestLocks(database, [calendarId], work);
 
 export {
-  SOURCE_INGEST_LOCK_NAMESPACE,
+  SOURCE_INGEST_LEASE_TTL_MS,
   SOURCE_INGEST_LOCK_TIMEOUT_MS,
-  acquireSourceIngestLocks,
+  toSourceIngestLeaseKey,
   withSourceIngestLock,
   withSourceIngestLocks,
 };

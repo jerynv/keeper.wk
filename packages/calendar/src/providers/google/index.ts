@@ -20,11 +20,6 @@ export {
   createGoogleSyncProvider,
   type GoogleSyncProviderConfig,
 } from "./destination/provider";
-export {
-  getGoogleAccountsByPlan,
-  getGoogleAccountsForUser,
-  type GoogleAccount,
-} from "./destination/sync";
 
 export {
   GOOGLE_CALENDAR_API,

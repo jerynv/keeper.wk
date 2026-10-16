@@ -80,7 +80,6 @@ const createThrottlingFetch = (requestedMasterIds: string[]): typeof fetch => {
       value: [createInstanceEvent(masterId, 1), createInstanceEvent(masterId, 2)],
     });
   };
-  throttlingFetch.preconnect = originalFetch.preconnect;
   return throttlingFetch;
 };
 

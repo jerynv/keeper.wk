@@ -32,7 +32,6 @@ describe("createOutlookSourceFetcher rate limiter consumption", () => {
         value: [],
       }));
     };
-    queuedFetch.preconnect = originalFetch.preconnect;
     globalThis.fetch = queuedFetch;
 
     // Production passes the rate limiter through a widened params type, not the published one.

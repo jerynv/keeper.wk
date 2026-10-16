@@ -62,7 +62,6 @@ const createFetchQueue = (
     return Promise.resolve(nextResponse);
   };
 
-  queuedFetch.preconnect = originalFetch.preconnect;
   return queuedFetch;
 };
 
@@ -347,7 +346,6 @@ describe("fetchCalendarEvents", () => {
         ],
       }));
     };
-    routingFetch.preconnect = originalFetch.preconnect;
     globalThis.fetch = routingFetch as typeof fetch;
 
     const result = await fetchCalendarEvents({

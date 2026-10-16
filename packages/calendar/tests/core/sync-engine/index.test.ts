@@ -1130,15 +1130,13 @@ describe("syncCalendar", () => {
     expect(typeof emittedEvents[0]?.["duration_ms"]).toBe("number");
   });
 
-  it("emits the underlying PostgreSQL error details when a database query throws", async () => {
+  it("emits the underlying D1 error details when a database query throws", async () => {
     const { syncCalendar } = await import("../../../src/core/sync-engine/index");
     const provider = makeProvider();
     const emittedEvents: Record<string, unknown>[] = [];
-    const cause = Object.assign(new Error("duplicate key value violates unique constraint"), {
-      constraint: "event_mappings_sync_event_cal_idx",
-      detail: "Key already exists.",
-      errno: "23505",
-    });
+    const cause = new Error(
+      "D1_ERROR: UNIQUE constraint failed: event_mappings.calendarId, event_mappings.syncEventId: SQLITE_CONSTRAINT",
+    );
     const error = new Error("Failed query", { cause });
 
     await expect(syncCalendar({
@@ -1153,12 +1151,12 @@ describe("syncCalendar", () => {
     })).rejects.toThrow("Failed query");
 
     expect(emittedEvents[0]).toMatchObject({
-      "error.database.constraint": "event_mappings_sync_event_cal_idx",
-      "error.database.detail": "Key already exists.",
-      "error.database.message": "duplicate key value violates unique constraint",
-      "error.database.sqlstate": "23505",
+      "error.database.constraint": "event_mappings.calendarId, event_mappings.syncEventId: SQLITE_CONSTRAINT",
+      "error.database.detail": "UNIQUE",
+      "error.database.message": cause.message,
       "error.message": "Failed query",
       outcome: "error",
     });
+    expect(emittedEvents[0]).not.toHaveProperty("error.database.sqlstate");
   });
 });

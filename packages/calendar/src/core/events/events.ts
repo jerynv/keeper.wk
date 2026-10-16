@@ -1,10 +1,10 @@
+import type { Database } from "@keeper.sh/database";
 import {
   calendarsTable,
   eventStatesTable,
   sourceDestinationMappingsTable,
 } from "@keeper.sh/database/schema";
 import { and, asc, eq, gte, inArray, isNotNull, or } from "drizzle-orm";
-import type { BunSQLClient } from "../database-client";
 import type {
   EventAvailability,
   MaterializedSyncableEvent,
@@ -204,7 +204,7 @@ const resolveEventNameTemplate = (
 };
 
 const getMappedSourceCalendarIds = async (
-  database: BunSQLClient,
+  database: Database,
   destinationCalendarId: string,
 ): Promise<string[]> => {
   const mappings = await database
@@ -216,7 +216,7 @@ const getMappedSourceCalendarIds = async (
 };
 
 const getEventsForCalendarsWithDiagnostics = async (
-  database: BunSQLClient,
+  database: Database,
   calendarIds: string[],
   syncWindow: SyncWindow,
 ): Promise<DestinationEventReadResult> => {
@@ -396,7 +396,7 @@ const getEventsForCalendarsWithDiagnostics = async (
 };
 
 const getEventsForCalendars = async (
-  database: BunSQLClient,
+  database: Database,
   calendarIds: string[],
   syncWindow: SyncWindow,
 ): Promise<MaterializedSyncableEvent[]> => {
@@ -405,7 +405,7 @@ const getEventsForCalendars = async (
 };
 
 const getEventsForDestination = async (
-  database: BunSQLClient,
+  database: Database,
   destinationCalendarId: string,
   syncWindow: SyncWindow,
 ): Promise<MaterializedSyncableEvent[]> => {

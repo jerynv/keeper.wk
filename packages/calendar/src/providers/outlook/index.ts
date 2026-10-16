@@ -20,11 +20,6 @@ export {
   createOutlookSyncProvider,
   type OutlookSyncProviderConfig,
 } from "./destination/provider";
-export {
-  getOutlookAccountsByPlan,
-  getOutlookAccountsForUser,
-  type OutlookAccount,
-} from "./destination/sync";
 
 export { MICROSOFT_GRAPH_API, OUTLOOK_PAGE_SIZE, GONE_STATUS } from "./shared/api";
 export { hasRateLimitMessage, isAuthError, isSimpleAuthError } from "./shared/errors";

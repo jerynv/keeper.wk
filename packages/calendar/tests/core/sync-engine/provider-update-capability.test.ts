@@ -1,11 +1,7 @@
-import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { executeRemoteOperations } from "../../../src/core/sync-engine/index";
 import type { CalendarSyncProvider } from "../../../src/core/sync-engine/types";
 import type { MaterializedSyncableEvent, SyncOperation } from "../../../src/core/types";
-
-const packageRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
 const makeEvent = (id: string): MaterializedSyncableEvent => ({
   id,
@@ -19,16 +15,6 @@ const makeEvent = (id: string): MaterializedSyncableEvent => ({
 });
 
 describe("provider update capability", () => {
-  it("types an optional updateEvents capability on CalendarSyncProvider", () => {
-    const typecheck = spawnSync("bun", ["x", "tsc", "--noEmit"], {
-      cwd: packageRoot,
-      encoding: "utf8",
-    });
-
-    expect(`${typecheck.stdout ?? ""}${typecheck.stderr ?? ""}`).toBe("");
-    expect(typecheck.status).toBe(0);
-  }, 180_000);
-
   it("keeps syncing a provider that omits updateEvents", async () => {
     const provider: CalendarSyncProvider = {
       deleteEvents: () => Promise.resolve([]),

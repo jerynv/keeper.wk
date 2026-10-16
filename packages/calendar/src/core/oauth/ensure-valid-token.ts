@@ -1,5 +1,5 @@
 import { TOKEN_REFRESH_BUFFER_MS } from "@keeper.sh/constants";
-import { widelog } from "widelogger";
+import { widelog } from "../telemetry/widelog";
 
 const MS_PER_SECOND = 1000;
 

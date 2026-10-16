@@ -1,4 +1,4 @@
-import { widelog } from "widelogger";
+import { widelog } from "../telemetry/widelog";
 import { measureSegment } from "../telemetry/segments";
 
 const MAX_JITTER_MS = 1000;

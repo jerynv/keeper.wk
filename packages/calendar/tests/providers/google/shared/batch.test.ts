@@ -293,7 +293,7 @@ describe("executeBatchChunked", () => {
         headers: { "Content-Type": "multipart/mixed; boundary=response_boundary" },
         status: 200,
       }));
-    }, { preconnect: originalFetch.preconnect });
+    }, {});
 
     vi.useFakeTimers();
     try {

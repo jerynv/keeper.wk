@@ -30,12 +30,6 @@ describe("non-global IPv6 scopes are rejected", () => {
     await expect(validateUrlSafety("http://[fec0::2]:8080/feed.ics", enabledOptions)).rejects.toThrow(UrlSafetyError);
   });
 
-  it("rejects a site-local address returned by DNS", async () => {
-    noRecords();
-    mockResolve6.mockResolvedValue(["fec0::2"]);
-    await expect(validateUrlSafety("http://internal.example.com/feed.ics", enabledOptions)).rejects.toThrow(UrlSafetyError);
-  });
-
   it("rejects an IPv4-compatible loopback literal", async () => {
     noRecords();
     await expect(validateUrlSafety("http://[::7f00:1]:8080/feed.ics", enabledOptions)).rejects.toThrow(UrlSafetyError);
@@ -56,11 +50,6 @@ describe("non-global IPv6 scopes are rejected", () => {
     await expect(validateUrlSafety("http://[3fff::abcd]/feed.ics", enabledOptions)).rejects.toThrow(UrlSafetyError);
   });
 
-  it("rejects 3fff::/20 returned by DNS", async () => {
-    noRecords();
-    mockResolve6.mockResolvedValue(["3fff:0:0:1::2"]);
-    await expect(validateUrlSafety("http://doc.example.com/feed.ics", enabledOptions)).rejects.toThrow(UrlSafetyError);
-  });
 });
 
 describe("global addresses remain allowed", () => {

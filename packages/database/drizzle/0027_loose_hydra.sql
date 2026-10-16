@@ -1,1 +1,0 @@
-ALTER TABLE "calendar_destinations" ADD COLUMN "needsReauthentication" boolean DEFAULT false NOT NULL;

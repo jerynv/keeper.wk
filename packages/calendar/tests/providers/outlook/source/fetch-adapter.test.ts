@@ -24,12 +24,10 @@ const fetchKeeperCategoryDelta = (): Promise<Response> => Promise.resolve(Respon
     start: { dateTime: "2027-03-08T14:00:00.000Z", timeZone: "UTC" },
   }],
 }));
-fetchKeeperCategoryDelta.preconnect = originalFetch.preconnect;
 const fetchSeriesMasterDelta = (): Promise<Response> => Promise.resolve(Response.json({
   "@odata.deltaLink": "https://graph.microsoft.com/delta?$deltatoken=next",
   value: [{ id: "series-master-1", type: "seriesMaster" }],
 }));
-fetchSeriesMasterDelta.preconnect = originalFetch.preconnect;
 const fetchOutlookDeltaWithoutSuccessor = (): Promise<Response> => Promise.resolve(Response.json({
   value: [{
     end: { dateTime: "2026-03-08T15:00:00.000Z", timeZone: "UTC" },
@@ -38,7 +36,6 @@ const fetchOutlookDeltaWithoutSuccessor = (): Promise<Response> => Promise.resol
     start: { dateTime: "2026-03-08T14:00:00.000Z", timeZone: "UTC" },
   }],
 }));
-fetchOutlookDeltaWithoutSuccessor.preconnect = originalFetch.preconnect;
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
@@ -51,7 +48,6 @@ describe("createOutlookSourceFetcher", () => {
       "@odata.deltaLink": rawDeltaLink,
       value: [],
     }));
-    queuedFetch.preconnect = originalFetch.preconnect;
     globalThis.fetch = queuedFetch;
     const fetcher = createOutlookSourceFetcher({
       accessToken: "test-token",
@@ -84,7 +80,6 @@ describe("createOutlookSourceFetcher", () => {
         start: { dateTime: "2098-03-08T14:00:00.000Z", timeZone: "UTC" },
       }],
     }));
-    queuedFetch.preconnect = originalFetch.preconnect;
     globalThis.fetch = queuedFetch;
     const fetcher = createOutlookSourceFetcher({
       accessToken: "test-token",
@@ -173,7 +168,6 @@ describe("createOutlookSourceFetcher", () => {
           value: [],
         }));
       };
-      recordingFetch.preconnect = originalFetch.preconnect;
       globalThis.fetch = recordingFetch;
       return requestedUrls;
     };

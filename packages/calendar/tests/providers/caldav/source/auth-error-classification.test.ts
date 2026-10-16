@@ -125,21 +125,15 @@ describe("isCalDAVAuthenticationError", () => {
     expect(isCalDAVAuthenticationError(new Error("Failed query", { cause: withheld }))).toBe(false);
   });
 
-  it("returns false when our own pool rejects the connection password", () => {
-    const postgresError = Object.assign(
-      new Error("password authentication failed for user \"keeper\""),
-      { code: "ERR_POSTGRES_SERVER_ERROR", errno: "28P01" },
-    );
+  it("returns false when our own database refuses the query", () => {
+    const databaseError = new Error("D1_ERROR: not authorized: SQLITE_AUTH (authentication failed)");
 
-    expect(isCalDAVAuthenticationError(postgresError)).toBe(false);
+    expect(isCalDAVAuthenticationError(databaseError)).toBe(false);
   });
 
-  it("returns false when a wrapped pool failure surfaces as the cause", () => {
-    const postgresError = Object.assign(
-      new Error("password authentication failed for user \"keeper\""),
-      { code: "ERR_POSTGRES_SERVER_ERROR", errno: "28P01" },
-    );
-    const wrapped = new Error("Failed query", { cause: postgresError });
+  it("returns false when a wrapped database failure surfaces as the cause", () => {
+    const databaseError = new Error("D1_ERROR: not authorized: SQLITE_AUTH (authentication failed)");
+    const wrapped = new Error("Failed query", { cause: databaseError });
 
     expect(isCalDAVAuthenticationError(wrapped)).toBe(false);
   });

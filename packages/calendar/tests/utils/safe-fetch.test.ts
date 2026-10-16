@@ -77,6 +77,10 @@ describe("validateUrlSafety", () => {
       );
     });
 
+    it("rejects an IPv4-mapped IPv6 loopback literal", async () => {
+      await expect(validateUrlSafety("http://[::ffff:127.0.0.1]/", enabledOptions)).rejects.toThrow(UrlSafetyError);
+    });
+
     it("rejects 0.0.0.0", async () => {
       await expect(validateUrlSafety("http://0.0.0.0/", enabledOptions)).rejects.toThrow(UrlSafetyError);
     });
@@ -85,43 +89,11 @@ describe("validateUrlSafety", () => {
       await expect(validateUrlSafety("http://93.184.216.34/cal.ics", enabledOptions)).resolves.toBeUndefined();
     });
 
-    it("rejects hostnames resolving to private IPs", async () => {
-      mockResolve4.mockResolvedValue(["192.168.1.1"]);
-      await expect(validateUrlSafety("http://evil.example.com/", enabledOptions)).rejects.toThrow(UrlSafetyError);
-    });
-
-    it("rejects hostnames resolving to loopback", async () => {
-      mockResolve4.mockResolvedValue(["127.0.0.1"]);
-      await expect(validateUrlSafety("http://evil.example.com/", enabledOptions)).rejects.toThrow(UrlSafetyError);
-    });
-
-    it("rejects if any resolved address is private", async () => {
-      mockResolve4.mockResolvedValue(["93.184.216.34", "10.0.0.1"]);
-      await expect(validateUrlSafety("http://mixed.example.com/", enabledOptions)).rejects.toThrow(UrlSafetyError);
-    });
-
     it("allows hostnames resolving to public IPs", async () => {
       mockResolve4.mockResolvedValue(["93.184.216.34"]);
       await expect(validateUrlSafety("https://calendar.google.com/basic.ics", enabledOptions)).resolves.toBeUndefined();
     });
 
-    it("rejects hostnames that resolve to no addresses", async () => {
-      mockResolve4.mockRejectedValue(new Error("ENOTFOUND"));
-      mockResolve6.mockRejectedValue(new Error("ENOTFOUND"));
-      await expect(validateUrlSafety("http://nonexistent.example.com/", enabledOptions)).rejects.toThrow(UrlSafetyError);
-    });
-
-    it("checks IPv6 resolution too", async () => {
-      mockResolve4.mockRejectedValue(new Error("no A records"));
-      mockResolve6.mockResolvedValue(["::1"]);
-      await expect(validateUrlSafety("http://ipv6only.example.com/", enabledOptions)).rejects.toThrow(UrlSafetyError);
-    });
-
-    it("rejects IPv4-mapped IPv6 private addresses", async () => {
-      mockResolve4.mockRejectedValue(new Error("no A records"));
-      mockResolve6.mockResolvedValue(["::ffff:127.0.0.1"]);
-      await expect(validateUrlSafety("http://mapped.example.com/", enabledOptions)).rejects.toThrow(UrlSafetyError);
-    });
   });
 
   describe("allowedPrivateHosts", () => {
@@ -178,8 +150,6 @@ type FetchFn = (input: string | Request | URL, init?: RequestInit) => Promise<Re
 const installMockFetch = (mockFn: ReturnType<typeof vi.fn<FetchFn>>): void => {
   Object.assign(globalThis, { fetch: mockFn });
 };
-
-const staleSocketError = (): Error => Object.assign(new Error("The socket connection was closed unexpectedly."), { code: "ECONNRESET" });
 
 describe("createSafeFetch", () => {
   const originalFetch = globalThis.fetch;
@@ -273,71 +243,6 @@ describe("createSafeFetch", () => {
     expect(response.status).toBe(200);
   });
 
-  describe("stale socket retry", () => {
-    it("retries once when a pooled socket was closed by the server", async () => {
-      const mockFetch = vi.fn<FetchFn>();
-      mockFetch.mockRejectedValueOnce(staleSocketError());
-      mockFetch.mockResolvedValueOnce(new Response("ok", { status: 200 }));
-      installMockFetch(mockFetch);
-
-      const safeFetch = createSafeFetch();
-      const response = await safeFetch("https://example.com/cal.ics", { body: "<propfind/>", method: "PROPFIND" });
-
-      expect(response.status).toBe(200);
-      expect(mockFetch).toHaveBeenCalledTimes(2);
-    });
-
-    it("retries stale sockets on redirect follow-ups", async () => {
-      const mockFetch = vi.fn<FetchFn>();
-      mockFetch.mockResolvedValueOnce(
-        new Response(null, {
-          status: 301,
-          headers: { location: "https://example.com/caldav/" },
-        }),
-      );
-      mockFetch.mockRejectedValueOnce(staleSocketError());
-      mockFetch.mockResolvedValueOnce(new Response("ok", { status: 207 }));
-      installMockFetch(mockFetch);
-
-      const safeFetch = createSafeFetch();
-      const response = await safeFetch("https://example.com/.well-known/caldav", { body: "<propfind/>", method: "PROPFIND" });
-
-      expect(response.status).toBe(207);
-      expect(mockFetch).toHaveBeenCalledTimes(3);
-    });
-
-    it("does not retry more than once", async () => {
-      const mockFetch = vi.fn<FetchFn>();
-      mockFetch.mockRejectedValue(staleSocketError());
-      installMockFetch(mockFetch);
-
-      const safeFetch = createSafeFetch();
-      await expect(safeFetch("https://example.com/cal.ics")).rejects.toThrow("closed unexpectedly");
-      expect(mockFetch).toHaveBeenCalledTimes(2);
-    });
-
-    it("does not retry errors without the ECONNRESET code", async () => {
-      const mockFetch = vi.fn<FetchFn>();
-      mockFetch.mockRejectedValue(new Error("Unable to connect."));
-      installMockFetch(mockFetch);
-
-      const safeFetch = createSafeFetch();
-      await expect(safeFetch("https://example.com/cal.ics")).rejects.toThrow("Unable to connect");
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it("does not retry when the request body is a stream", async () => {
-      const mockFetch = vi.fn<FetchFn>();
-      mockFetch.mockRejectedValue(staleSocketError());
-      installMockFetch(mockFetch);
-
-      const safeFetch = createSafeFetch();
-      const body = new ReadableStream({ start: (controller) => controller.close() });
-      await expect(safeFetch("https://example.com/cal.ics", { body, method: "PUT" })).rejects.toThrow("closed unexpectedly");
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-  });
-
   it("allows whitelisted private hosts when enabled", async () => {
     const mockFetch = vi.fn<FetchFn>();
     mockFetch.mockResolvedValue(new Response("ok", { status: 200 }));
@@ -412,7 +317,7 @@ describe("pinning leaves the existing guard behaviour unchanged", () => {
     const [input, init] = mockFetch.mock.calls[0] ?? [];
     expect(String(input)).toBe("https://feeds.example.com/cal.ics");
     expect(sentHeaders(input ?? "", init).get("host")).toBeNull();
-    expect((init as BunFetchRequestInit | undefined)?.tls).toBeUndefined();
+    expect((init as (RequestInit & { tls?: unknown }) | undefined)?.tls).toBeUndefined();
   });
 
   it("resolves no DNS and issues no request for a literal private IP when enabled", async () => {

@@ -15,7 +15,7 @@ const recordRequestBodies = (): { bodies: string[]; fetch: typeof fetch } => {
       bodies.push(init.body);
       return Promise.resolve(new Response("", { status: 207, statusText: "Multi-Status" }));
     },
-    { preconnect: globalThis.fetch.preconnect },
+    {},
   );
 
   return { bodies, fetch: record };

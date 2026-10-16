@@ -154,8 +154,8 @@ export {
   type InsertedCalendar,
 } from "./core/source/apply-calendar-rediscovery";
 export {
-  SOURCE_INGEST_LOCK_NAMESPACE,
   SOURCE_INGEST_LOCK_TIMEOUT_MS,
+  toSourceIngestLeaseKey,
   withSourceIngestLock,
   withSourceIngestLocks,
 } from "./core/source/ingest-lock";
@@ -174,9 +174,9 @@ export {
 } from "./core/source/sync-diagnostics";
 export {
   buildEventStateInsertRow,
+  buildEventStateInsertStatements,
   insertEventStatesWithConflictResolution,
   type EventStateInsertRow,
-  type EventStateInsertClient,
 } from "./core/source/write-event-states";
 export { computeSyncOperations } from "./core/sync/operations";
 export type { ReconciliationScope } from "./core/sync/operations";
@@ -209,11 +209,6 @@ export {
   deleteEventMapping,
   type EventMapping,
 } from "./core/events/mappings";
-export {
-  getOAuthAccountsByPlan,
-  getOAuthAccountsForUser,
-  type OAuthAccount,
-} from "./core/oauth/accounts";
 export {
   createGoogleOAuthService,
   createGoogleTokenRefresher,

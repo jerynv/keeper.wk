@@ -1,5 +1,5 @@
+import type { Database } from "@keeper.sh/database";
 import type { CalendarDiscoveryCache } from "./shared/discovery-cache";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
 
 interface CalDAVProviderOptions {
   providerId: string;
@@ -7,7 +7,7 @@ interface CalDAVProviderOptions {
 }
 
 interface CalDAVProviderConfig {
-  database: BunSQLDatabase;
+  database: Database;
   encryptionKey: string;
 }
 
@@ -39,7 +39,7 @@ interface CalDAVSourceAccount {
 }
 
 interface CalDAVSourceConfig {
-  database: BunSQLDatabase;
+  database: Database;
   calendarId: string;
   userId: string;
   calendarUrl: string;
@@ -48,7 +48,7 @@ interface CalDAVSourceConfig {
 }
 
 interface CalDAVSourceProviderConfig {
-  database: BunSQLDatabase;
+  database: Database;
   encryptionKey: string;
 }
 
@@ -59,7 +59,7 @@ interface CalDAVSourceSyncResult {
 }
 
 interface CalDAVServiceConfig {
-  database: BunSQLDatabase;
+  database: Database;
   encryptionKey: string;
 }
 

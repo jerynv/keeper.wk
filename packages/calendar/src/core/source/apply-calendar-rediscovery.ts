@@ -1,3 +1,5 @@
+import { chunkForParameters, chunkRowsForInsert, runBatch, withLeases } from "@keeper.sh/database";
+import type { Database, DatabaseBatchItem } from "@keeper.sh/database";
 import { applySourceSyncDefaults } from "@keeper.sh/data-schemas";
 import {
   calendarAccountsTable,
@@ -5,9 +7,7 @@ import {
   calendarRemovalsTable,
   calendarsTable,
 } from "@keeper.sh/database/schema";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
-import type { BunSQLTransactionClient } from "../database-client";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import {
   normalizeCalDAVCalendarKey,
   normalizeCalDAVServerHost,
@@ -23,7 +23,14 @@ import type {
   RediscoveryCalendarType,
 } from "./calendar-rediscovery";
 
-const USER_ACCOUNT_LOCK_NAMESPACE = 9002;
+/*
+ * Upstream serialised rediscovery per user with pg_advisory_xact_lock; here it is a
+ * lease. The reads, the plan and the batched writes all run under it.
+ */
+const ACCOUNT_REDISCOVERY_LEASE_PREFIX = "account-rediscovery:";
+const ACCOUNT_REDISCOVERY_LEASE_TTL_MS = 60_000;
+const ACCOUNT_REDISCOVERY_WAIT_MS = 30_000;
+const SET_CLAUSE_PARAMETERS = 2;
 
 interface InsertedCalendar {
   id: string;
@@ -44,7 +51,7 @@ interface CalendarRediscoveryApplyInput {
 }
 
 const readExistingCalendars = async (
-  transaction: BunSQLTransactionClient,
+  transaction: Database,
   input: CalendarRediscoveryApplyInput,
 ) => {
   const rows = await transaction
@@ -66,7 +73,7 @@ const readExistingCalendars = async (
 };
 
 const readRemovedKeys = async (
-  transaction: BunSQLTransactionClient,
+  transaction: Database,
   input: CalendarRediscoveryApplyInput,
 ): Promise<Set<string>> => {
   const rows = await transaction
@@ -102,7 +109,7 @@ const toBlockedKey = (
 };
 
 const readCrossAccountCalDAVKeys = async (
-  transaction: BunSQLTransactionClient,
+  transaction: Database,
   input: CalendarRediscoveryApplyInput,
 ): Promise<Set<string>> => {
   const { caldavServerHost } = input;
@@ -161,78 +168,83 @@ const buildInsertRow = (
   ...resolveIdentityColumn(calendar),
 });
 
-const insertDiscoveredCalendars = (
-  transaction: BunSQLTransactionClient,
+const buildPlanWrites = (
+  database: Database,
   plan: CalendarRediscoveryPlan,
   input: CalendarRediscoveryApplyInput,
-): Promise<InsertedCalendar[]> => {
-  if (plan.toInsert.length === 0) {
-    return Promise.resolve([]);
-  }
-
-  return transaction
+): { inserts: DatabaseBatchItem[]; updates: DatabaseBatchItem[] } => {
+  const inserts = chunkRowsForInsert(
+    calendarsTable,
+    plan.toInsert.map((calendar) => buildInsertRow(calendar, input)),
+  ).map((rows) => database
     .insert(calendarsTable)
-    .values(plan.toInsert.map((calendar) => buildInsertRow(calendar, input)))
-    .returning({ id: calendarsTable.id, name: calendarsTable.name });
+    .values(rows)
+    .returning({ id: calendarsTable.id, name: calendarsTable.name }));
+
+  const updates: DatabaseBatchItem[] = [];
+  // The SET clause binds unavailableSince and the updatedAt stamp beside the ids.
+  for (const ids of chunkForParameters(plan.toRevive, 1, SET_CLAUSE_PARAMETERS)) {
+    updates.push(database
+      .update(calendarsTable)
+      .set({ unavailableSince: null })
+      .where(inArray(calendarsTable.id, ids)));
+  }
+  for (const ids of chunkForParameters(plan.toMarkUnavailable, 1, SET_CLAUSE_PARAMETERS)) {
+    updates.push(database
+      .update(calendarsTable)
+      .set({ unavailableSince: input.now })
+      .where(inArray(calendarsTable.id, ids)));
+  }
+  for (const retarget of plan.toRetargetUrl) {
+    updates.push(database
+      .update(calendarsTable)
+      .set({ calendarUrl: retarget.calendarUrl })
+      .where(eq(calendarsTable.id, retarget.id)));
+  }
+  updates.push(database
+    .update(calendarAccountsTable)
+    .set({ calendarsRefreshedAt: input.now })
+    .where(eq(calendarAccountsTable.id, input.accountId)));
+
+  return { inserts, updates };
 };
 
 const applyCalendarRediscoveryPlan = (
-  database: BunSQLDatabase,
+  database: Database,
   input: CalendarRediscoveryApplyInput,
 ): Promise<CalendarRediscoveryApplyResult> =>
-  database.transaction(async (transaction: BunSQLTransactionClient) => {
-    await transaction.execute(
-      sql`select pg_advisory_xact_lock(${USER_ACCOUNT_LOCK_NAMESPACE}, hashtext(${input.userId}))`,
-    );
+  withLeases(
+    database,
+    [`${ACCOUNT_REDISCOVERY_LEASE_PREFIX}${input.userId}`],
+    { ttlMs: ACCOUNT_REDISCOVERY_LEASE_TTL_MS, waitMs: ACCOUNT_REDISCOVERY_WAIT_MS },
+    async () => {
+      const existing = await readExistingCalendars(database, input);
+      const blockedKeys = await readCrossAccountCalDAVKeys(database, input);
+      const removedKeys = await readRemovedKeys(database, input);
+      const plan = planCalendarRediscovery({
+        blockedKeys,
+        discovered: input.discovered,
+        enumerationStartedAt: input.now,
+        existing,
+        removedKeys,
+      });
 
-    const existing = await readExistingCalendars(transaction, input);
-    const blockedKeys = await readCrossAccountCalDAVKeys(transaction, input);
-    const removedKeys = await readRemovedKeys(transaction, input);
-    const plan = planCalendarRediscovery({
-      blockedKeys,
-      discovered: input.discovered,
-      enumerationStartedAt: input.now,
-      existing,
-      removedKeys,
-    });
+      if (plan.suppressed) {
+        return { ...plan, inserted: [] };
+      }
 
-    if (plan.suppressed) {
-      return { ...plan, inserted: [] };
-    }
+      const { inserts, updates } = buildPlanWrites(database, plan, input);
+      const results = await runBatch(database, [...inserts, ...updates]);
+      const inserted = results
+        .slice(0, inserts.length)
+        .flatMap((rows) => rows as InsertedCalendar[]);
 
-    const inserted = await insertDiscoveredCalendars(transaction, plan, input);
-
-    if (plan.toRevive.length > 0) {
-      await transaction
-        .update(calendarsTable)
-        .set({ unavailableSince: null })
-        .where(inArray(calendarsTable.id, plan.toRevive));
-    }
-
-    if (plan.toMarkUnavailable.length > 0) {
-      await transaction
-        .update(calendarsTable)
-        .set({ unavailableSince: input.now })
-        .where(inArray(calendarsTable.id, plan.toMarkUnavailable));
-    }
-
-    for (const retarget of plan.toRetargetUrl) {
-      await transaction
-        .update(calendarsTable)
-        .set({ calendarUrl: retarget.calendarUrl })
-        .where(eq(calendarsTable.id, retarget.id));
-    }
-
-    await transaction
-      .update(calendarAccountsTable)
-      .set({ calendarsRefreshedAt: input.now })
-      .where(eq(calendarAccountsTable.id, input.accountId));
-
-    return { ...plan, inserted };
-  });
+      return { ...plan, inserted };
+    },
+  );
 
 const markCalendarRediscoveryAttempt = async (
-  database: BunSQLDatabase,
+  database: Database,
   accountId: string,
   now: Date,
 ): Promise<void> => {
@@ -243,7 +255,6 @@ const markCalendarRediscoveryAttempt = async (
 };
 
 export {
-  USER_ACCOUNT_LOCK_NAMESPACE,
   applyCalendarRediscoveryPlan,
   markCalendarRediscoveryAttempt,
 };

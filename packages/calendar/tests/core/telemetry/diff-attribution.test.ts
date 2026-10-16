@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { widelog, widelogger } from "widelogger";
+import { beforeEach, describe, expect, it } from "vitest";
+import { widelog, widelogger } from "../../../src/core/telemetry/widelog";
 import type { SourceEvent } from "../../../src/core/types";
 import type { StoredSourceEventState } from "../../../src/core/source/stored-event-state";
 import type { IngestionPersistenceWork, IngestionResult } from "../../../src/core/sync-engine/ingest";
@@ -7,29 +7,19 @@ import { ingestSource } from "../../../src/core/sync-engine/ingest";
 
 type EmittedEvent = Record<string, unknown>;
 
+const emitted: EmittedEvent[] = [];
+
 const { context } = widelogger({
   defaultEventName: "wide_event",
   environment: "production",
   service: "calendar-test",
+  transport: (event) => {
+    emitted.push(event as EmittedEvent);
+  },
 });
-
-const emitted: EmittedEvent[] = [];
-const originalWrite = process.stdout.write.bind(process.stdout);
 
 beforeEach(() => {
   emitted.length = 0;
-  process.stdout.write = ((chunk: unknown) => {
-    for (const line of String(chunk).split("\n")) {
-      if (line.trim().length > 0) {
-        emitted.push(JSON.parse(line) as EmittedEvent);
-      }
-    }
-    return true;
-  }) as typeof process.stdout.write;
-});
-
-afterEach(() => {
-  process.stdout.write = originalWrite;
 });
 
 const SOURCE_EVENT_COUNT = 4000;
@@ -91,7 +81,9 @@ const createHandOffTransaction = (
 
   const runWorkFromForeignContext = async (): Promise<void> => {
     while (handOff.work === null) {
-      await Bun.sleep(POLL_INTERVAL_MS);
+      await new Promise((resolve) => {
+      setTimeout(resolve, POLL_INTERVAL_MS);
+    });
     }
     await handOff.work({
       flush: () => Promise.resolve(),

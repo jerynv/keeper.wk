@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { widelog, widelogger } from "widelogger";
+import { widelog, widelogger } from "../../../src/core/telemetry/widelog";
 import { fetchCalendarEvents } from "../../../src/providers/google/source/utils/fetch-events";
 
 interface EmittedEvent {
@@ -10,30 +10,24 @@ interface EmittedEvent {
   work?: { provider_http_ms?: number; transform_ms?: number };
 }
 
+const emitted: EmittedEvent[] = [];
+
 const { context } = widelogger({
   defaultEventName: "wide_event",
   environment: "production",
   service: "calendar-test",
+  transport: (event) => {
+    emitted.push(event as EmittedEvent);
+  },
 });
 
-const emitted: EmittedEvent[] = [];
-const originalWrite = process.stdout.write.bind(process.stdout);
 const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
   emitted.length = 0;
-  process.stdout.write = ((chunk: unknown) => {
-    for (const line of String(chunk).split("\n")) {
-      if (line.trim().length > 0) {
-        emitted.push(JSON.parse(line) as EmittedEvent);
-      }
-    }
-    return true;
-  }) as typeof process.stdout.write;
 });
 
 afterEach(() => {
-  process.stdout.write = originalWrite;
   globalThis.fetch = originalFetch;
 });
 
@@ -41,7 +35,7 @@ const FAST_PAGE_MS = 5;
 const SLOW_PAGE_MS = 80;
 
 /*
- * Bun.sleep can return a fraction of a millisecond before the span measuring it elapses, so
+ * A timer can return a fraction of a millisecond before the span measuring it elapses, so
  * an exact floor makes these assertions report timer granularity rather than attribution.
  * The slack is far smaller than any injected delay, so a segment charged to the wrong bucket
  * still fails.
@@ -73,7 +67,9 @@ const stubPages = (delays: number[]): void => {
     const delayMs = delays[index] ?? 0;
     const isLast = index === delays.length - 1;
     index += 1;
-    await Bun.sleep(delayMs);
+    await new Promise((resolve) => {
+      setTimeout(resolve, delayMs);
+    });
     return Response.json({
       items: [],
       nextSyncToken: "sync-token",
@@ -125,7 +121,9 @@ describe("provider work attribution", () => {
     globalThis.fetch = ((): Promise<Response> => Promise.resolve(new Response(
       new ReadableStream({
         async pull(controller) {
-          await Bun.sleep(SLOW_PAGE_MS);
+          await new Promise((resolve) => {
+      setTimeout(resolve, SLOW_PAGE_MS);
+    });
           controller.enqueue(payload);
           controller.close();
         },
@@ -147,7 +145,9 @@ describe("provider work attribution", () => {
       const url = new URL(String(input));
       const wantsSecondPage = url.searchParams.get("syncToken") === "two-pages"
         && url.searchParams.get("pageToken") === null;
-      await Bun.sleep(FAST_PAGE_MS);
+      await new Promise((resolve) => {
+      setTimeout(resolve, FAST_PAGE_MS);
+    });
       return Response.json({
         items: [],
         nextSyncToken: "sync-token",

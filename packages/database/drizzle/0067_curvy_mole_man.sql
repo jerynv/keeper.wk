@@ -1,1 +1,0 @@
-ALTER TABLE "calendars" DROP COLUMN "excludeWorkingLocation";

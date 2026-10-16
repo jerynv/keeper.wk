@@ -1,20 +1,22 @@
+import path from "node:path";
+import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  plugins: [
+    cloudflareTest(async () => ({
+      miniflare: {
+        bindings: {
+          TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")),
+        },
+        compatibilityDate: "2026-10-01",
+        compatibilityFlags: ["nodejs_compat"],
+        d1Databases: ["DB"],
+      },
+    })),
+  ],
   test: {
-    deps: {
-      interopDefault: false,
-    },
-    globals: true,
-    exclude: ["./tests/migrations/**"],
-    /*
-     * The KEEPER_TEST_DATABASE_URL suites connect to a real Postgres and drive
-     * pool saturation against it. CI runs every workspace's vitest concurrently
-     * on a two-core runner sharing one Postgres service container, so neither
-     * setup nor a test body fits inside the default ten seconds there.
-     */
-    hookTimeout: 60_000,
     include: ["./tests/**/*.test.ts"],
-    testTimeout: 60_000,
+    setupFiles: ["./tests/apply-migrations.ts"],
   },
 });

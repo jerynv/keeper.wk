@@ -15,7 +15,7 @@
   },
   "scripts": {
     "types": "tsc --noEmit",
-    "test": "TZ=UTC bun x --bun vitest run",
+    "test": "vitest run",
     "lint": "oxlint ."
   },
   "dependencies": {
@@ -23,6 +23,7 @@
     "@keeper.sh/data-schemas": "workspace:*",
     "@keeper.sh/database": "workspace:*",
     "@keeper.sh/digest-fetch": "workspace:*",
+    "@noble/hashes": "2.4.0",
     "drizzle-orm": "0.45.2",
     "entities": "^7.0.1",
     "fast-json-stable-stringify": "^2.1.0",
@@ -31,13 +32,14 @@
     "rrule": "^2.8.1",
     "tldts": "^7.0.27",
     "ts-ics": "^2.4.3",
-    "tsdav": "^2.1.8",
-    "widelogger": "^0.7.0"
+    "tsdav": "^2.1.8"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.0",
+    "@cloudflare/workers-types": "5.20261008.1",
     "@keeper.sh/fixtures": "workspace:*",
     "@keeper.sh/typescript-config": "workspace:*",
-    "@types/bun": "latest",
+    "@types/node": "25.0.9",
     "typescript": "5.9.3",
     "vitest": "^4.1.4"
   }

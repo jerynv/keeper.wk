@@ -3,6 +3,7 @@ import type { SafeFetchOptions } from "../../utils/safe-fetch";
 import { coerceCompliantDate } from "../patches/coerce-compliant-date";
 import { parseIcsCalendarLenient } from "./lenient-parser";
 import { HTTP_STATUS } from "@keeper.sh/constants";
+import { encodeBase64 } from "../../core/utils/base64";
 
 const normalizeCalendarUrl = (url: string): string => {
   if (url.startsWith("webcal://")) {
@@ -39,7 +40,7 @@ const parseUrlWithCredentials = (url: string): ParsedUrl => {
 
   if (parsed.username || parsed.password) {
     const credentials = `${decodeURIComponent(parsed.username)}:${decodeURIComponent(parsed.password)}`;
-    headers["Authorization"] = `Basic ${Buffer.from(credentials).toString("base64")}`;
+    headers["Authorization"] = `Basic ${encodeBase64(credentials)}`;
     parsed.username = "";
     parsed.password = "";
   }

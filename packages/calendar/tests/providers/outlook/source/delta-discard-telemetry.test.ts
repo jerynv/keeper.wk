@@ -43,7 +43,6 @@ const answerWith = (items: OutlookItem[], deltaLink: string): void => {
       value: items,
     }));
   };
-  stub.preconnect = originalFetch.preconnect;
   globalThis.fetch = stub as unknown as typeof globalThis.fetch;
 };
 

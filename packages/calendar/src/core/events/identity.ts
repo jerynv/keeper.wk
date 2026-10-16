@@ -1,7 +1,8 @@
 import { KEEPER_EVENT_SUFFIX } from "@keeper.sh/constants";
+import { sha256Hex } from "../utils/sha256";
 
 const generateDeterministicEventUid = (seed: string): string => {
-  const hash = new Bun.CryptoHasher("sha256").update(seed).digest("hex").slice(0, 32);
+  const hash = sha256Hex(seed).slice(0, 32);
   return `${hash}${KEEPER_EVENT_SUFFIX}`;
 };
 

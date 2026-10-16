@@ -1,5 +1,5 @@
 {
   "extends": "@keeper.sh/typescript-config",
-  "include": ["scripts/**/*","src/**/*","tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "*.ts"],
   "exclude": ["node_modules"]
 }

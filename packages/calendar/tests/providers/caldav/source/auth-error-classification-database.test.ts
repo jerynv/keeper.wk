@@ -2,14 +2,11 @@ import { DrizzleQueryError } from "drizzle-orm/errors";
 import { describe, expect, it } from "vitest";
 import { isCalDAVAuthenticationError } from "../../../../src/providers/caldav/source/auth-error-classification";
 
-const postgresError = (
-  message: string,
-  fields: Record<string, unknown>,
-): Error & Record<string, unknown> =>
-  Object.assign(new Error(message), { name: "PostgresError" }, fields);
+// What D1 throws: a plain Error whose message carries the "D1_" prefix.
+const d1Error = (message: string): Error => new Error(`D1_ERROR: ${message}`);
 
 const EVENT_UPSERT_SQL =
-  'insert into "event_states" ("id", "source_event_uid", "title") values ($1, $2, $3) '
+  'insert into "event_states" ("id", "source_event_uid", "title") values (?, ?, ?) '
   + 'on conflict ("id") do update set "title" = excluded."title"';
 
 const upsertFailure = (
@@ -27,10 +24,7 @@ describe("isCalDAVAuthenticationError against our own database failures", () => 
   it("does not read a deadlock on the event upsert as a CalDAV auth failure", () => {
     const error = upsertFailure(
       ["state-1", "uid-1@fastmail.com", "Standup"],
-      postgresError("deadlock detected", {
-        code: "ERR_POSTGRES_SERVER_ERROR",
-        errno: "40P01",
-      }),
+      d1Error("deadlock detected"),
     );
 
     expect(isCalDAVAuthenticationError(error)).toBe(false);
@@ -39,10 +33,7 @@ describe("isCalDAVAuthenticationError against our own database failures", () => 
   it("does not read an event title mentioning authentication failed as a CalDAV auth failure", () => {
     const error = upsertFailure(
       AUTH_TEXT_PARAMS,
-      postgresError("value too long for type character varying(255)", {
-        code: "ERR_POSTGRES_SERVER_ERROR",
-        errno: "22001",
-      }),
+      d1Error("value too long for type character varying(255)"),
     );
 
     expect(isCalDAVAuthenticationError(error)).toBe(false);
@@ -51,10 +42,7 @@ describe("isCalDAVAuthenticationError against our own database failures", () => 
   it("does not read an event title mentioning invalid credentials as a CalDAV auth failure", () => {
     const error = upsertFailure(
       ["state-1", "uid-1@fastmail.com", "Invalid credentials post-mortem"],
-      postgresError("could not serialize access due to concurrent update", {
-        code: "ERR_POSTGRES_SERVER_ERROR",
-        errno: "40001",
-      }),
+      d1Error("could not serialize access due to concurrent update"),
     );
 
     expect(isCalDAVAuthenticationError(error)).toBe(false);
@@ -63,7 +51,7 @@ describe("isCalDAVAuthenticationError against our own database failures", () => 
   it("does not read a lost pooled connection as a CalDAV auth failure", () => {
     const error = upsertFailure(
       AUTH_TEXT_PARAMS,
-      postgresError("Connection closed", { code: "ERR_POSTGRES_CONNECTION_CLOSED" }),
+      d1Error("Connection closed"),
     );
 
     expect(isCalDAVAuthenticationError(error)).toBe(false);
@@ -74,10 +62,7 @@ describe("isCalDAVAuthenticationError against our own database failures", () => 
       cause: new Error("transaction rolled back", {
         cause: upsertFailure(
           AUTH_TEXT_PARAMS,
-          postgresError("deadlock detected", {
-            code: "ERR_POSTGRES_SERVER_ERROR",
-            errno: "40P01",
-          }),
+          d1Error("deadlock detected"),
         ),
       }),
     });
@@ -90,10 +75,7 @@ describe("isCalDAVAuthenticationError against our own database failures", () => 
       [
         upsertFailure(
           AUTH_TEXT_PARAMS,
-          postgresError("deadlock detected", {
-            code: "ERR_POSTGRES_SERVER_ERROR",
-            errno: "40P01",
-          }),
+          d1Error("deadlock detected"),
         ),
       ],
       "ingest batch failed",
@@ -113,10 +95,7 @@ describe("isCalDAVAuthenticationError against our own database failures", () => 
       isCalDAVAuthenticationError(
         upsertFailure(
           AUTH_TEXT_PARAMS,
-          postgresError("deadlock detected", {
-            code: "ERR_POSTGRES_SERVER_ERROR",
-            errno: "40P01",
-          }),
+          d1Error("deadlock detected"),
         ),
       ));
 

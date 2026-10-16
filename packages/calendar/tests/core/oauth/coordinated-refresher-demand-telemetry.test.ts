@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { widelog, widelogger } from "widelogger";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
+import { beforeEach, describe, expect, it } from "vitest";
+import { widelog, widelogger } from "../../../src/core/telemetry/widelog";
+import type { Database as BunSQLDatabase } from "@keeper.sh/database";
 import { createCoordinatedRefresher } from "../../../src/core/oauth/coordinated-refresher";
 
 interface EmittedEvent {
@@ -21,34 +21,19 @@ interface PriorRow {
   reauthenticationSource: string | null;
 }
 
+const emitted: EmittedEvent[] = [];
+
 const { context } = widelogger({
   defaultEventName: "wide_event",
   environment: "production",
   service: "calendar-test",
+  transport: (event) => {
+    emitted.push(event as EmittedEvent);
+  },
 });
-
-const emitted: EmittedEvent[] = [];
-const originalWrite = process.stdout.write.bind(process.stdout);
-
-const captureLine = (chunk: unknown): void => {
-  for (const line of String(chunk).split("\n")) {
-    if (line.trim().length === 0) {
-      continue;
-    }
-    emitted.push(JSON.parse(line) as EmittedEvent);
-  }
-};
 
 beforeEach(() => {
   emitted.length = 0;
-  process.stdout.write = ((chunk: unknown) => {
-    captureLine(chunk);
-    return true;
-  }) as typeof process.stdout.write;
-});
-
-afterEach(() => {
-  process.stdout.write = originalWrite;
 });
 
 const createChain = (resolve: () => unknown): unknown => {

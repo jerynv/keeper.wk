@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { widelog, widelogger } from "widelogger";
+import { beforeEach, describe, expect, it } from "vitest";
+import { widelog, widelogger } from "../../../src/core/telemetry/widelog";
 import { withBackoff } from "../../../src/core/utils/backoff";
 
 interface EmittedEvent {
@@ -9,35 +9,25 @@ interface EmittedEvent {
   wait?: { provider_retry_ms?: number };
 }
 
+const emitted: EmittedEvent[] = [];
+
 const { context } = widelogger({
   defaultEventName: "wide_event",
   environment: "production",
   service: "calendar-test",
+  transport: (event) => {
+    emitted.push(event as EmittedEvent);
+  },
 });
-
-const emitted: EmittedEvent[] = [];
-const originalWrite = process.stdout.write.bind(process.stdout);
 
 beforeEach(() => {
   emitted.length = 0;
-  process.stdout.write = ((chunk: unknown) => {
-    for (const line of String(chunk).split("\n")) {
-      if (line.trim().length > 0) {
-        emitted.push(JSON.parse(line) as EmittedEvent);
-      }
-    }
-    return true;
-  }) as typeof process.stdout.write;
-});
-
-afterEach(() => {
-  process.stdout.write = originalWrite;
 });
 
 const RETRY_DELAY_MS = 120;
 
 /*
- * Bun.sleep can return a fraction of a millisecond before the span measuring it elapses, so
+ * A timer can return a fraction of a millisecond before the span measuring it elapses, so
  * an exact floor makes these assertions report timer granularity rather than attribution.
  * The slack is far smaller than any injected delay, so a segment charged to the wrong bucket
  * still fails.

@@ -1,3 +1,5 @@
+import { decodeBase64Url, encodeBase64Url } from "../utils/base64";
+
 const VERSIONED_SYNC_TOKEN_PREFIX = "keeper:sync-token:";
 const LEGACY_SYNC_WINDOW_VERSION = 0;
 
@@ -41,7 +43,7 @@ const decodeStoredSyncToken = (storedSyncToken: string): DecodedSyncToken => {
   const encodedTokenValue = serializedValue.slice(separatorIndex + 1);
 
   try {
-    const decodedToken = Buffer.from(encodedTokenValue, "base64url").toString("utf8");
+    const decodedToken = decodeBase64Url(encodedTokenValue);
     if (decodedToken.length === 0) {
       return {
         syncToken: storedSyncToken,
@@ -65,7 +67,7 @@ const encodeStoredSyncToken = (
   syncToken: string,
   syncWindowVersion: number,
 ): string => {
-  const encodedTokenValue = Buffer.from(syncToken, "utf8").toString("base64url");
+  const encodedTokenValue = encodeBase64Url(syncToken);
   const normalizedVersion = parseVersionNumber(String(syncWindowVersion));
   return `${VERSIONED_SYNC_TOKEN_PREFIX}${normalizedVersion}:${encodedTokenValue}`;
 };

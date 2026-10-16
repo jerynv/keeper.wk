@@ -1,6 +1,6 @@
+import type { Database } from "@keeper.sh/database";
 import { eventMappingsTable, eventStatesTable } from "@keeper.sh/database/schema";
 import { and, count, eq } from "drizzle-orm";
-import type { BunSQLClient } from "../database-client";
 
 const DEFAULT_COUNT = 0;
 
@@ -43,7 +43,7 @@ const requireMappingSourceCalendarId = (
 };
 
 const getEventMappingsForDestination = async (
-  database: BunSQLClient,
+  database: Database,
   calendarId: string,
 ): Promise<EventMapping[]> => {
   const mappings = await database
@@ -77,7 +77,7 @@ const getEventMappingsForDestination = async (
 };
 
 const createEventMapping = async (
-  database: BunSQLClient,
+  database: Database,
   params: {
     eventStateId: string;
     sourceCalendarId: string;
@@ -106,12 +106,12 @@ const createEventMapping = async (
     .onConflictDoNothing();
 };
 
-const deleteEventMapping = async (database: BunSQLClient, mappingId: string): Promise<void> => {
+const deleteEventMapping = async (database: Database, mappingId: string): Promise<void> => {
   await database.delete(eventMappingsTable).where(eq(eventMappingsTable.id, mappingId));
 };
 
 const deleteEventMappingByDestinationUid = async (
-  database: BunSQLClient,
+  database: Database,
   calendarId: string,
   destinationEventUid: string,
 ): Promise<void> => {
@@ -126,7 +126,7 @@ const deleteEventMappingByDestinationUid = async (
 };
 
 const countMappingsForDestination = async (
-  database: BunSQLClient,
+  database: Database,
   calendarId: string,
 ): Promise<number> => {
   const [result] = await database

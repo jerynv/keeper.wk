@@ -1,4 +1,4 @@
-import { widelog } from "widelogger";
+import { widelog } from "../telemetry/widelog";
 
 interface CredentialRefreshResult {
   access_token: string;
@@ -49,7 +49,9 @@ const acquireOrAdopt = async (
     if (adopted) {
       return adopted;
     }
-    await Bun.sleep(ACQUIRE_RETRY_MS);
+    await new Promise((resolve) => {
+      setTimeout(resolve, ACQUIRE_RETRY_MS);
+    });
   }
 };
 

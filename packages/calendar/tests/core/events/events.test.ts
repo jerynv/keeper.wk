@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
 import {
   isEventInDestinationReconciliationWindow,
@@ -244,9 +245,7 @@ describe("isEventInDestinationReconciliationWindow", () => {
 
 describe("destination reconciliation source selection", () => {
   it("never narrows the mapped source calendars by availability", async () => {
-    const source = await Bun.file(
-      `${import.meta.dirname}/../../../src/core/events/events.ts`,
-    ).text();
+    const { default: source } = await import("../../../src/core/events/events.ts?raw");
 
     expect(source).toContain("getMappedSourceCalendarIds");
     expect(source).not.toContain("unavailableSince");

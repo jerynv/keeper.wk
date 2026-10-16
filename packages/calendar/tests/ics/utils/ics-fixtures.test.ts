@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fixtureManifest, getFixturePath } from "@keeper.sh/fixtures";
+import { fixtureManifest, readFixture } from "@keeper.sh/fixtures";
 import { diffEvents } from "../../../src/ics/utils/diff-events";
 import { parseIcsCalendar } from "../../../src/ics/utils/parse-ics-calendar";
 import { parseIcsEvents } from "../../../src/ics/utils/parse-ics-events";
@@ -11,9 +11,8 @@ const recurrenceSignalPattern = /^RRULE:|^EXDATE|^RECURRENCE-ID/m;
 
 describe("ics fixtures parsing", () => {
   for (const fixtureSource of enabledFixtures) {
-    it(`parses ${fixtureSource.id}`, async () => {
-      const fixturePath = getFixturePath(fixtureSource);
-      const icsString = await Bun.file(fixturePath).text();
+    it(`parses ${fixtureSource.id}`, () => {
+      const icsString = readFixture(fixtureSource);
 
       const parsedCalendar = parseIcsCalendar({ icsString });
       const parsedEvents = parseIcsEvents(parsedCalendar);
@@ -35,9 +34,8 @@ describe("ics fixtures parsing", () => {
 
 describe("ics fixtures diff stability", () => {
   for (const fixtureSource of enabledFixtures) {
-    it(`produces no diff for equivalent stored events in ${fixtureSource.id}`, async () => {
-      const fixturePath = getFixturePath(fixtureSource);
-      const icsString = await Bun.file(fixturePath).text();
+    it(`produces no diff for equivalent stored events in ${fixtureSource.id}`, () => {
+      const icsString = readFixture(fixtureSource);
 
       const parsedCalendar = parseIcsCalendar({ icsString });
       const parsedEvents = parseIcsEvents(parsedCalendar);

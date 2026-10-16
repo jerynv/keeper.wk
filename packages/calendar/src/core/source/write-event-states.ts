@@ -1,11 +1,11 @@
+import { chunkRowsForInsert, runBatch } from "@keeper.sh/database";
+import type { Database, DatabaseBatchItem } from "@keeper.sh/database";
 import { eventStatesTable } from "@keeper.sh/database/schema";
 import { isNotNull, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { IcsExceptionDates, IcsRecurrenceRule } from "ts-ics";
 import type { SourceEvent } from "../types";
 import { serializeStoredIcsRecurrenceRule } from "../events/stored-recurrence";
-
-const EMPTY_ROW_COUNT = 0;
 
 type EventStateInsertRow = typeof eventStatesTable.$inferInsert;
 
@@ -104,51 +104,25 @@ interface EventStateConflictConfig {
   set: Record<string, SQL>;
 }
 
-interface EventStateInsertClient {
-  insert: (table: typeof eventStatesTable) => {
-    values: {
-      (row: EventStateInsertRow): {
-        onConflictDoUpdate: (config: EventStateConflictConfig) => Promise<unknown>;
-      };
-      (rows: EventStateInsertRow[]): {
-      onConflictDoUpdate: (config: EventStateConflictConfig) => Promise<unknown>;
-      };
-    };
-  };
-}
-
 /*
- * Postgres caps a bind message at 65535 parameters and each row spends roughly
- * fifteen of them, so a snapshot source reporting its whole history in one fetch
- * can exceed the ceiling in a single statement. That rejection rolls the whole
- * ingest back and recurs every tick, so the calendar never stores anything again.
+ * One statement per chunk, sized under D1's 100-parameter cap, returned
+ * rather than run so a caller can put them in the same batch() as its deletes and
+ * keep the whole ingest write atomic (T1).
  */
-const INSERT_CHUNK_SIZE = 1000;
-
-const insertEventStateRows = async (
-  database: EventStateInsertClient,
+const buildEventStateRowStatements = (
+  database: Database,
   rows: EventStateInsertRow[],
   conflictConfig: EventStateConflictConfig,
-  onStatement?: () => void,
-): Promise<void> => {
-  if (rows.length === EMPTY_ROW_COUNT) {
-    return;
-  }
+): DatabaseBatchItem[] =>
+  chunkRowsForInsert(eventStatesTable, rows).map((chunk) => database
+    .insert(eventStatesTable)
+    .values(chunk)
+    .onConflictDoUpdate(conflictConfig));
 
-  for (let offset = 0; offset < rows.length; offset += INSERT_CHUNK_SIZE) {
-    onStatement?.();
-    await database
-      .insert(eventStatesTable)
-      .values(rows.slice(offset, offset + INSERT_CHUNK_SIZE))
-      .onConflictDoUpdate(conflictConfig);
-  }
-};
-
-const insertEventStatesWithConflictResolution = async (
-  database: EventStateInsertClient,
+const buildEventStateInsertStatements = (
+  database: Database,
   rows: EventStateInsertRow[],
-  onStatement?: () => void,
-): Promise<void> => {
+): DatabaseBatchItem[] => {
   const providerRows: EventStateInsertRow[] = [];
   const legacyRecurringRows: EventStateInsertRow[] = [];
   const legacyNonRecurringRows: EventStateInsertRow[] = [];
@@ -163,22 +137,35 @@ const insertEventStatesWithConflictResolution = async (
     }
   }
 
-  await insertEventStateRows(database, providerRows, {
-    set: PROVIDER_EVENT_STATE_CONFLICT_SET,
-    target: PROVIDER_EVENT_STATE_CONFLICT_TARGET,
-    targetWhere: isNotNull(eventStatesTable.sourceEventId),
-  }, onStatement);
-  await insertEventStateRows(database, legacyRecurringRows, {
-    set: EVENT_STATE_CONFLICT_SET,
-    target: LEGACY_RECURRING_EVENT_STATE_CONFLICT_TARGET,
-    targetWhere: sql`${eventStatesTable.sourceEventId} is null and ${eventStatesTable.recurrenceId} is not null`,
-  }, onStatement);
-  await insertEventStateRows(database, legacyNonRecurringRows, {
-    set: EVENT_STATE_CONFLICT_SET,
-    target: LEGACY_NON_RECURRING_EVENT_STATE_CONFLICT_TARGET,
-    targetWhere: sql`${eventStatesTable.sourceEventId} is null and ${eventStatesTable.recurrenceId} is null`,
-  }, onStatement);
+  return [
+    ...buildEventStateRowStatements(database, providerRows, {
+      set: PROVIDER_EVENT_STATE_CONFLICT_SET,
+      target: PROVIDER_EVENT_STATE_CONFLICT_TARGET,
+      targetWhere: isNotNull(eventStatesTable.sourceEventId),
+    }),
+    ...buildEventStateRowStatements(database, legacyRecurringRows, {
+      set: EVENT_STATE_CONFLICT_SET,
+      target: LEGACY_RECURRING_EVENT_STATE_CONFLICT_TARGET,
+      targetWhere: sql`${eventStatesTable.sourceEventId} is null and ${eventStatesTable.recurrenceId} is not null`,
+    }),
+    ...buildEventStateRowStatements(database, legacyNonRecurringRows, {
+      set: EVENT_STATE_CONFLICT_SET,
+      target: LEGACY_NON_RECURRING_EVENT_STATE_CONFLICT_TARGET,
+      targetWhere: sql`${eventStatesTable.sourceEventId} is null and ${eventStatesTable.recurrenceId} is null`,
+    }),
+  ];
 };
 
-export { buildEventStateInsertRow, insertEventStatesWithConflictResolution };
-export type { EventStateInsertRow, EventStateInsertClient };
+const insertEventStatesWithConflictResolution = async (
+  database: Database,
+  rows: EventStateInsertRow[],
+): Promise<void> => {
+  await runBatch(database, buildEventStateInsertStatements(database, rows));
+};
+
+export {
+  buildEventStateInsertRow,
+  buildEventStateInsertStatements,
+  insertEventStatesWithConflictResolution,
+};
+export type { EventStateInsertRow };

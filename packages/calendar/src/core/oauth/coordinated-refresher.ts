@@ -1,3 +1,4 @@
+import type { Database } from "@keeper.sh/database";
 import type { CredentialRefreshResult, RefreshLockStore } from "./refresh-coordinator";
 import { runWithCredentialRefreshLock } from "./refresh-coordinator";
 import { isOAuthOperatorFaultError, isOAuthReauthRequiredError } from "./error-classification";
@@ -11,10 +12,9 @@ import {
 } from "@keeper.sh/database/schema";
 import { REAUTHENTICATION_TOKEN_REFRESH, TOKEN_REFRESH_BUFFER_MS } from "@keeper.sh/constants";
 import { classifyDatabaseError } from "@keeper.sh/database";
-import { widelog } from "widelogger";
+import { widelog } from "../telemetry/widelog";
 import { abortableSleep } from "../utils/backoff";
 import { eq } from "drizzle-orm";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
 
 const MS_PER_SECOND = 1000;
 
@@ -28,7 +28,7 @@ interface RefreshedCredential {
 }
 
 const persistRefreshedCredential = async (
-  database: BunSQLDatabase,
+  database: Database,
   oauthCredentialId: string,
   credential: RefreshedCredential,
 ): Promise<void> => {
@@ -52,7 +52,7 @@ const persistRefreshedCredential = async (
 };
 
 interface CoordinatedRefresherOptions {
-  database: BunSQLDatabase;
+  database: Database;
   oauthCredentialId: string;
   calendarAccountId: string;
   refreshLockStore: RefreshLockStore | null;

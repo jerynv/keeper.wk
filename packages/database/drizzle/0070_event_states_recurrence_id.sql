@@ -1,1 +1,0 @@
-ALTER TABLE "event_states" ADD COLUMN "recurrenceId" timestamp;

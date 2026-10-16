@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { widelog, widelogger } from "widelogger";
+import { beforeEach, describe, expect, it } from "vitest";
+import { widelog, widelogger } from "../../../src/core/telemetry/widelog";
 import { ensureValidToken } from "../../../src/core/oauth/ensure-valid-token";
 import { runWithCredentialRefreshLock } from "../../../src/core/oauth/refresh-coordinator";
 import { measureSegment } from "../../../src/core/telemetry/segments";
@@ -11,29 +11,19 @@ interface EmittedEvent {
   wait?: { token_refresh_ms?: number };
 }
 
+const emitted: EmittedEvent[] = [];
+
 const { context } = widelogger({
   defaultEventName: "wide_event",
   environment: "production",
   service: "calendar-test",
+  transport: (event) => {
+    emitted.push(event as EmittedEvent);
+  },
 });
-
-const emitted: EmittedEvent[] = [];
-const originalWrite = process.stdout.write.bind(process.stdout);
 
 beforeEach(() => {
   emitted.length = 0;
-  process.stdout.write = ((chunk: unknown) => {
-    for (const line of String(chunk).split("\n")) {
-      if (line.trim().length > 0) {
-        emitted.push(JSON.parse(line) as EmittedEvent);
-      }
-    }
-    return true;
-  }) as typeof process.stdout.write;
-});
-
-afterEach(() => {
-  process.stdout.write = originalWrite;
 });
 
 const REFRESH_MS = 120;
@@ -42,7 +32,7 @@ const HOUR_MS = 3_600_000;
 const EXPIRES_IN_SECONDS = 3600;
 
 /*
- * Bun.sleep can return a fraction of a millisecond before the span measuring it elapses, so
+ * A timer can return a fraction of a millisecond before the span measuring it elapses, so
  * an exact floor makes these assertions report timer granularity rather than attribution.
  * The slack is far smaller than any injected delay, so a segment charged to the wrong bucket
  * still fails.
@@ -94,7 +84,9 @@ describe("token refresh attribution", () => {
       await measureSegment("wait.token_refresh_ms", () => ensureValidToken(
         expiredTokenState(),
         async () => {
-          await Bun.sleep(REFRESH_MS);
+          await new Promise((resolve) => {
+      setTimeout(resolve, REFRESH_MS);
+    });
           return { access_token: "fresh", expires_in: EXPIRES_IN_SECONDS };
         },
       ));
@@ -116,7 +108,9 @@ describe("token refresh attribution", () => {
       for (const resolve of startedSignal.resolve) {
         resolve();
       }
-      await Bun.sleep(REFRESH_MS);
+      await new Promise((resolve) => {
+      setTimeout(resolve, REFRESH_MS);
+    });
       return { access_token: "fresh", expires_in: EXPIRES_IN_SECONDS };
     };
 

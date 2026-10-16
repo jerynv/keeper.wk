@@ -1,1 +1,0 @@
-ALTER TABLE "calendar_snapshots" ADD COLUMN "json" jsonb;

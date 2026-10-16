@@ -25,7 +25,6 @@ interface GoogleItem {
 const answerWith = (items: GoogleItem[], syncToken = "token-next"): void => {
   const stub = (): Promise<Response> =>
     Promise.resolve(Response.json({ items, nextSyncToken: syncToken }));
-  stub.preconnect = originalFetch.preconnect;
   globalThis.fetch = stub as unknown as typeof globalThis.fetch;
 };
 

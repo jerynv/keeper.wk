@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { widelog, widelogger } from "widelogger";
-import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { widelog, widelogger } from "../../../../src/core/telemetry/widelog";
+import type { Database as BunSQLDatabase } from "@keeper.sh/database";
 
 interface EmittedEvent {
   provider?: { account_id?: string };
@@ -29,6 +29,12 @@ const createFailingClient = (): Record<string, unknown> => ({
   resolveCalendarUrl: () => Promise.resolve().then(() => clientFailure()),
 });
 
+// The source lease is a D1 row; this test is about reauth telemetry, so it runs the work directly.
+vi.mock("../../../../src/core/source/ingest-lock", () => ({
+  withSourceIngestLock: (database: unknown, _calendarId: string, work: (locked: unknown) => unknown) =>
+    work(database),
+}));
+
 vi.mock("../../../../src/providers/caldav/shared/client", () => ({
   CalDAVClient: function CalDAVClient() {
     return createFailingClient();
@@ -44,37 +50,22 @@ const { createCalDAVSourceProvider } = await import(
   "../../../../src/providers/caldav/source/provider"
 );
 
+const emitted: EmittedEvent[] = [];
+
 const { context } = widelogger({
   defaultEventName: "wide_event",
   environment: "production",
   service: "calendar-test",
+  transport: (event) => {
+    emitted.push(event as EmittedEvent);
+  },
 });
-
-const emitted: EmittedEvent[] = [];
-const originalWrite = process.stdout.write.bind(process.stdout);
-
-const captureLine = (chunk: unknown): void => {
-  for (const line of String(chunk).split("\n")) {
-    if (line.trim().length === 0) {
-      continue;
-    }
-    emitted.push(JSON.parse(line) as EmittedEvent);
-  }
-};
 
 beforeEach(() => {
   emitted.length = 0;
   clientFailure = () => {
     throw Object.assign(new Error("Unauthorized"), { status: 401 });
   };
-  process.stdout.write = ((chunk: unknown) => {
-    captureLine(chunk);
-    return true;
-  }) as typeof process.stdout.write;
-});
-
-afterEach(() => {
-  process.stdout.write = originalWrite;
 });
 
 const SOURCE_ROW = {

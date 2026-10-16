@@ -1,12 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { D1_MAX_BOUND_PARAMETERS } from "@keeper.sh/database";
 import { eventStatesTable } from "@keeper.sh/database/schema";
+import { eq } from "drizzle-orm";
+import { describe, expect, it } from "vitest";
 import type { EventStateInsertRow } from "../../../src/core/source/write-event-states";
 import {
   buildEventStateInsertRow,
+  buildEventStateInsertStatements,
   insertEventStatesWithConflictResolution,
 } from "../../../src/core/source/write-event-states";
+import { seedCalendar, testDatabase } from "../../support/d1";
 
-describe("insertEventStatesWithConflictResolution", () => {
+const database = testDatabase();
+
+const readStates = (calendarId: string) =>
+  database.select().from(eventStatesTable).where(eq(eventStatesTable.calendarId, calendarId));
+
+describe("insertEventStatesWithConflictResolution (D1)", () => {
   it("persists recurrence metadata", () => {
     const recurrenceId = new Date("2026-03-05T10:00:00.000Z");
     const row = buildEventStateInsertRow("calendar-1", {
@@ -23,160 +32,71 @@ describe("insertEventStatesWithConflictResolution", () => {
     expect(row.exceptionDates).toBe('[{"date":"2026-03-19T10:00:00.000Z"}]');
   });
 
-  it("skips database writes when there are no rows", async () => {
-    let insertCalled = false;
-
-    const database = {
-      insert: () => {
-        insertCalled = true;
-        return {
-        values: () => ({
-            onConflictDoUpdate: () => Promise.resolve(),
-          }),
-        };
-      },
-    };
-
-    await insertEventStatesWithConflictResolution(database, []);
-
-    expect(insertCalled).toBe(false);
+  it("issues no statements and writes nothing when there are no rows", async () => {
+    expect(buildEventStateInsertStatements(database, [])).toEqual([]);
+    await expect(insertEventStatesWithConflictResolution(database, [])).resolves.toBeUndefined();
   });
 
-  it("chunks a large snapshot so one statement cannot exceed the bind-parameter ceiling", async () => {
-    /*
-     * An unbounded ICS feed reports its whole history in one fetch. At roughly
-     * fifteen bind parameters per row, a single statement past ~4000 rows is
-     * rejected outright, rolling back the ingest on every tick thereafter.
-     */
-    const batchSizes: number[] = [];
-    const database = {
-      insert: () => ({
-        values: (value: EventStateInsertRow | EventStateInsertRow[]) => {
-          let insertedRows = value;
-          if (!Array.isArray(insertedRows)) {
-            insertedRows = [insertedRows];
-          }
-          batchSizes.push(insertedRows.length);
-          return { onConflictDoUpdate: () => Promise.resolve() };
-        },
-      }),
-    };
+  it("stores a large snapshot in one batch with every statement under D1's parameter cap", async () => {
+    // An unbounded ICS feed reports its whole history in one fetch.
+    const calendar = await seedCalendar(database);
     const rows = Array.from({ length: 8000 }, (_unused, index) =>
-      buildEventStateInsertRow("calendar-1", {
-        endTime: new Date("2026-03-12T11:00:00.000Z"),
-        startTime: new Date("2026-03-12T10:00:00.000Z"),
+      buildEventStateInsertRow(calendar.id, {
+        endTime: new Date(Date.UTC(2026, 2, 12, 11) + index * 60_000),
+        startTime: new Date(Date.UTC(2026, 2, 12, 10) + index * 60_000),
+        title: `Event ${index}`,
         uid: `uid-${index}`,
       }));
 
+    const statements = buildEventStateInsertStatements(database, rows);
+    for (const statement of statements) {
+      expect((statement as unknown as { toSQL: () => { params: unknown[] } }).toSQL().params.length)
+        .toBeLessThanOrEqual(D1_MAX_BOUND_PARAMETERS);
+    }
+
     await insertEventStatesWithConflictResolution(database, rows);
 
-    expect(batchSizes.reduce((total, size) => total + size, 0)).toBe(8000);
-    expect(Math.max(...batchSizes)).toBeLessThanOrEqual(4000);
+    expect(await readStates(calendar.id)).toHaveLength(8000);
   });
 
-  it("uses provider identity for provider rows and storage identity for legacy rows", async () => {
-    const rows: EventStateInsertRow[] = [
-      {
-        availability: "busy",
-        calendarId: "calendar-1",
-        endTime: new Date("2026-03-12T11:00:00.000Z"),
-        sourceEventId: "provider-event-1",
-        sourceEventType: "default",
-        sourceEventUid: "uid-1",
-        startTime: new Date("2026-03-12T10:00:00.000Z"),
-        title: "Focus Block",
-      },
-      {
-        calendarId: "calendar-1",
-        endTime: new Date("2026-03-13T11:00:00.000Z"),
-        sourceEventUid: "legacy-uid-1",
-        startTime: new Date("2026-03-13T10:00:00.000Z"),
-      },
-      {
-        calendarId: "calendar-1",
-        endTime: new Date("2026-03-20T11:00:00.000Z"),
-        recurrenceId: new Date("2026-03-20T10:00:00.000Z"),
-        sourceEventUid: "legacy-recurring-uid-1",
-        startTime: new Date("2026-03-20T10:00:00.000Z"),
-      },
-    ];
-
-    const calls: {
-      conflictConfig: {
-        set: Record<string, unknown>;
-        target: unknown[];
-        targetWhere: unknown;
-      };
-      insertedRows: EventStateInsertRow[];
-      insertTable: typeof eventStatesTable;
-    }[] = [];
-
-    const database = {
-      insert: (table: typeof eventStatesTable) => ({
-        values: (value: EventStateInsertRow | EventStateInsertRow[]) => ({
-          onConflictDoUpdate: (config: {
-            set: Record<string, unknown>;
-            target: unknown[];
-            targetWhere: unknown;
-          }) => {
-            let insertedRows = value;
-            if (!Array.isArray(insertedRows)) {
-              insertedRows = [insertedRows];
-            }
-            calls.push({
-              conflictConfig: config,
-              insertedRows,
-              insertTable: table,
-            });
-            return Promise.resolve();
-          },
-        }),
-      }),
+  it("updates each identity kind in place instead of duplicating it", async () => {
+    const calendar = await seedCalendar(database);
+    const providerRow: EventStateInsertRow = {
+      availability: "busy",
+      calendarId: calendar.id,
+      endTime: new Date("2026-03-12T11:00:00.000Z"),
+      sourceEventId: "provider-event-1",
+      sourceEventType: "default",
+      sourceEventUid: "uid-1",
+      startTime: new Date("2026-03-12T10:00:00.000Z"),
+      title: "Focus Block",
     };
+    const legacyRow: EventStateInsertRow = {
+      calendarId: calendar.id,
+      endTime: new Date("2026-03-13T11:00:00.000Z"),
+      sourceEventUid: "legacy-uid-1",
+      startTime: new Date("2026-03-13T10:00:00.000Z"),
+      title: "Legacy",
+    };
+    const recurringRow: EventStateInsertRow = {
+      calendarId: calendar.id,
+      endTime: new Date("2026-03-20T11:00:00.000Z"),
+      recurrenceId: new Date("2026-03-20T10:00:00.000Z"),
+      sourceEventUid: "legacy-recurring-uid-1",
+      startTime: new Date("2026-03-20T10:00:00.000Z"),
+      title: "Weekly",
+    };
+    await insertEventStatesWithConflictResolution(database, [providerRow, legacyRow, recurringRow]);
 
-    await insertEventStatesWithConflictResolution(database, rows);
+    await insertEventStatesWithConflictResolution(database, [
+      // Same provider id, moved and renamed: the provider identity wins.
+      { ...providerRow, startTime: new Date("2026-03-12T12:00:00.000Z"), endTime: new Date("2026-03-12T13:00:00.000Z"), title: "Moved" },
+      { ...legacyRow, title: "Legacy renamed" },
+      { ...recurringRow, title: "Weekly renamed" },
+    ]);
 
-    expect(calls).toHaveLength(3);
-    const [providerCall, legacyRecurringCall, legacyNonRecurringCall] = calls;
-    expect(providerCall?.insertTable).toBe(eventStatesTable);
-    expect(providerCall?.insertedRows).toEqual([rows[0]]);
-    expect(providerCall?.conflictConfig.target).toEqual([
-      eventStatesTable.calendarId,
-      eventStatesTable.sourceEventId,
-    ]);
-    expect(providerCall?.conflictConfig.targetWhere).toBeDefined();
-    expect(Object.keys(providerCall?.conflictConfig.set ?? {}).toSorted()).toEqual([
-      "availability",
-      "description",
-      "endTime",
-      "exceptionDates",
-      "isAllDay",
-      "location",
-      "recurrenceId",
-      "recurrenceRule",
-      "sourceEventId",
-      "sourceEventType",
-      "sourceEventUid",
-      "startTime",
-      "startTimeZone",
-      "title",
-    ]);
-    expect(legacyRecurringCall?.insertTable).toBe(eventStatesTable);
-    expect(legacyRecurringCall?.insertedRows).toEqual([rows[2]]);
-    expect(legacyRecurringCall?.conflictConfig.target).toEqual([
-      eventStatesTable.calendarId,
-      eventStatesTable.sourceEventUid,
-      eventStatesTable.recurrenceId,
-    ]);
-    expect(legacyRecurringCall?.conflictConfig.targetWhere).toBeDefined();
-    expect(legacyNonRecurringCall?.insertTable).toBe(eventStatesTable);
-    expect(legacyNonRecurringCall?.insertedRows).toEqual([rows[1]]);
-    expect(legacyNonRecurringCall?.conflictConfig.target).toEqual([
-      eventStatesTable.calendarId,
-      eventStatesTable.sourceEventUid,
-      eventStatesTable.startTime,
-      eventStatesTable.endTime,
-    ]);
-    expect(legacyNonRecurringCall?.conflictConfig.targetWhere).toBeDefined();
+    const stored = await readStates(calendar.id);
+    const titles = stored.map((row) => row.title).toSorted();
+    expect(titles).toEqual(["Legacy renamed", "Moved", "Weekly renamed"]);
   });
 });

@@ -23,7 +23,6 @@ const fetchOutOfWindowGoogleDelta = (): Promise<Response> => Promise.resolve(Res
   }],
   nextSyncToken: "next-google-token",
 }));
-fetchOutOfWindowGoogleDelta.preconnect = originalFetch.preconnect;
 const fetchGoogleDeltaWithoutSuccessor = (): Promise<Response> => Promise.resolve(Response.json({
   items: [{
     end: { dateTime: "2026-03-08T15:00:00.000Z", timeZone: "UTC" },
@@ -33,7 +32,6 @@ const fetchGoogleDeltaWithoutSuccessor = (): Promise<Response> => Promise.resolv
     status: "confirmed",
   }],
 }));
-fetchGoogleDeltaWithoutSuccessor.preconnect = originalFetch.preconnect;
 const fetchGoogleDeltaWithoutUid = (): Promise<Response> => Promise.resolve(Response.json({
   items: [{
     end: { dateTime: "2026-03-08T15:00:00.000Z", timeZone: "UTC" },
@@ -43,7 +41,6 @@ const fetchGoogleDeltaWithoutUid = (): Promise<Response> => Promise.resolve(Resp
   }],
   nextSyncToken: "next-google-token",
 }));
-fetchGoogleDeltaWithoutUid.preconnect = originalFetch.preconnect;
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
@@ -56,7 +53,6 @@ describe("createGoogleSourceFetcher", () => {
       items: [],
       nextSyncToken: rawSyncToken,
     }));
-    queuedFetch.preconnect = originalFetch.preconnect;
     globalThis.fetch = queuedFetch;
     const fetcher = createGoogleSourceFetcher({
       accessToken: "test-token",
