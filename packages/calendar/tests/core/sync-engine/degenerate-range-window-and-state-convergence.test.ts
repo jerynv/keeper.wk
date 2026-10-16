@@ -193,7 +193,7 @@ const createGoogleHarness = (options: HarnessOptions): Harness => {
         state.pushFailures.push("rejected");
         return { success: false as const, error: "rejected" };
       }
-      const uid = `keeper-${event.id}`;
+      const uid = `keeper-${event.id}@keeper.sh`;
       const payload = serializeGoogleEvent(event, uid);
       if (!payload) {
         state.pushFailures.push("not serializable");
@@ -329,7 +329,7 @@ const createOutlookHarness = (options: HarnessOptions): Harness => {
       }
       nextRemoteId += 1;
       const deleteId = `outlook-${nextRemoteId}`;
-      const uid = `keeper-${event.id}`;
+      const uid = `keeper-${event.id}@keeper.sh`;
       state.counters.writes += 1;
       stored.set(deleteId, { ...payload, iCalUId: uid, id: deleteId });
       return { deleteId, remoteId: uid, success: true as const };
@@ -715,7 +715,7 @@ describe.each(HARNESS_FACTORIES)("$name destination upgrading a legacy mirror", 
     const legacyMapping = {
       calendarId: DESTINATION_CALENDAR_ID,
       deleteIdentifier: "legacy-delete-id",
-      destinationEventUid: "legacy-uid",
+      destinationEventUid: "legacy-uid@keeper.sh",
       endTime: INSTANT,
       eventStateId: event.eventStateId,
       id: "legacy-mapping",

@@ -165,7 +165,7 @@ const runAttempt = async (
               events.map((event) => ({
                 deleteIdentifier: `del-${event.id}`,
                 eventId: event.id,
-                remoteEventUid: `remote-${event.id}`,
+                remoteEventUid: `remote-${event.id}@keeper.sh`,
                 success: true as const,
               })),
             ),

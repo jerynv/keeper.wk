@@ -38,7 +38,7 @@ const createLocalEvent = (
 const createEventMapping = (overrides: Partial<EventMapping>): EventMapping => ({
   calendarId: "destination-calendar-id",
   deleteIdentifier: "delete-identifier-1",
-  destinationEventUid: "destination-uid-1",
+  destinationEventUid: "destination-uid-1@keeper.sh",
   endTime: new Date("2026-03-08T15:00:00.000Z"),
   eventStateId: "event-state-id-1",
   id: "mapping-id-1",

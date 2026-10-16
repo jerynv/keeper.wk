@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createOutlookSyncProvider } from "../../../../src/providers/outlook/destination/provider";
-import type { RedisRateLimiter } from "../../../../src/core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../../src/core/utils/request-rate-limiter";
 
-const createProvider = (options: { rateLimiter?: RedisRateLimiter; signal?: AbortSignal } = {}) =>
+const createProvider = (options: { rateLimiter?: RequestRateLimiter; signal?: AbortSignal } = {}) =>
   createOutlookSyncProvider({
     accessToken: "test-token",
     refreshToken: "test-refresh",
@@ -33,7 +33,7 @@ describe("verification obeys the limiter, timeout and abort", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     const acquire = vi.fn(() => Promise.resolve());
-    const rateLimiter: RedisRateLimiter = { acquire };
+    const rateLimiter: RequestRateLimiter = { acquire };
 
     const verified = await createProvider({ rateLimiter }).verifyEventsExist([
       "first-id",
@@ -67,7 +67,7 @@ describe("verification obeys the limiter, timeout and abort", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     const acquire = vi.fn(() => Promise.resolve());
-    const rateLimiter: RedisRateLimiter = { acquire };
+    const rateLimiter: RequestRateLimiter = { acquire };
     const controller = new AbortController();
     controller.abort(new DOMException("superseded", "AbortError"));
 

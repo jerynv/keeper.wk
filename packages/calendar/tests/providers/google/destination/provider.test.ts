@@ -3,7 +3,7 @@ import { createGoogleSyncProvider } from "../../../../src/providers/google/desti
 import { computeSyncOperations } from "../../../../src/core/sync/operations";
 import { createSyncEventContentHash } from "../../../../src/core/events/content-hash";
 import type { MaterializedSyncableEvent } from "../../../../src/core/types";
-import type { RedisRateLimiter } from "../../../../src/core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../../src/core/utils/request-rate-limiter";
 
 const batchMocks = vi.hoisted(() => ({
   executeBatchChunked: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock("../../../../src/providers/google/shared/batch", () => ({
 }));
 
 const createProvider = (options: {
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   signal?: AbortSignal;
 } = {}) => createGoogleSyncProvider({
   accessToken: "test-token",

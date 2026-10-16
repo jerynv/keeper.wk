@@ -1,6 +1,6 @@
 import type { CalendarSyncProvider, RefreshLockStore } from "@keeper.sh/calendar";
 import type { SafeFetchOptions } from "@keeper.sh/calendar/safe-fetch";
-import type { RedisRateLimiter } from "@keeper.sh/calendar";
+import type { RequestRateLimiter } from "@keeper.sh/calendar";
 import {
   createGoogleTokenRefresher,
   createMicrosoftTokenRefresher,
@@ -39,7 +39,7 @@ const resolveOAuthProvider = async (
   accountId: string,
   oauthConfig: OAuthConfig,
   refreshLockStore: RefreshLockStore | null,
-  rateLimiter?: RedisRateLimiter,
+  rateLimiter?: RequestRateLimiter,
   signal?: AbortSignal,
 ): Promise<CalendarSyncProvider | null> => {
   const [oauthCred] = await database
@@ -168,7 +168,7 @@ interface ResolveProviderOptions {
   oauthConfig: OAuthConfig;
   encryptionKey?: string;
   refreshLockStore?: RefreshLockStore | null;
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   safeFetchOptions?: SafeFetchOptions;
   signal?: AbortSignal;
 }

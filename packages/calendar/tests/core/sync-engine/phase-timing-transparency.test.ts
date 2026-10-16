@@ -114,8 +114,8 @@ const makeMapping = (
   overrides: Partial<EventMapping> = {},
 ): EventMapping => ({
   calendarId: "dest-cal-1",
-  deleteIdentifier: `remote-${event.id}`,
-  destinationEventUid: `remote-${event.id}`,
+  deleteIdentifier: `remote-${event.id}@keeper.sh`,
+  destinationEventUid: `remote-${event.id}@keeper.sh`,
   endTime: event.endTime,
   eventStateId: event.id,
   id: `map-${event.id}`,
@@ -130,7 +130,7 @@ describe("syncCalendar instrumentation transparency", () => {
   it("leaves the caller's provider object untouched across repeated runs", async () => {
     const provider = makeProvider({
       pushEvents: (events) => Promise.resolve(
-        events.map((event) => ({ remoteId: `remote-${event.id}`, success: true })),
+        events.map((event) => ({ remoteId: `remote-${event.id}@keeper.sh`, success: true })),
       ),
     });
     const before = { ...provider };
@@ -173,11 +173,11 @@ describe("syncCalendar instrumentation transparency", () => {
       localEvents,
       provider,
       remoteEvents: stale.map((staleEvent) => ({
-        deleteId: `remote-${staleEvent.id}`,
+        deleteId: `remote-${staleEvent.id}@keeper.sh`,
         endTime: staleEvent.endTime,
         isKeeperEvent: true,
         startTime: staleEvent.startTime,
-        uid: `remote-${staleEvent.id}`,
+        uid: `remote-${staleEvent.id}@keeper.sh`,
       })),
     });
 
@@ -212,11 +212,11 @@ describe("syncCalendar instrumentation transparency", () => {
         existingMappings: [makeMapping(localEvent)],
         localEvents: [localEvent],
         remoteEvents: [{
-          deleteId: "remote-ev-1",
+          deleteId: "remote-ev-1@keeper.sh",
           endTime: localEvent.endTime,
           isKeeperEvent: true,
           startTime: localEvent.startTime,
-          uid: "remote-ev-1",
+          uid: "remote-ev-1@keeper.sh",
         }],
       }),
       reconciliationScope: TEST_RECONCILIATION_SCOPE,
@@ -236,7 +236,7 @@ describe("syncCalendar instrumentation transparency", () => {
       provider: makeProvider({
         pushEvents: async () => {
           await delay(40);
-          return [{ remoteId: "remote-1", success: true }];
+          return [{ remoteId: "remote-1@keeper.sh", success: true }];
         },
       }),
       readState: async () => {
@@ -258,7 +258,7 @@ describe("syncCalendar instrumentation transparency", () => {
       const provider = makeProvider({
         pushEvents: async (events) => {
           await vi.advanceTimersByTimeAsync((events[0]?.id.length ?? 1) * 10);
-          return events.map((event) => ({ remoteId: `remote-${event.id}`, success: true }));
+          return events.map((event) => ({ remoteId: `remote-${event.id}@keeper.sh`, success: true }));
         },
       });
 
@@ -305,7 +305,7 @@ describe("syncCalendar instrumentation transparency", () => {
       },
       localEvents: [makeEvent("ev-1")],
       provider: makeProvider({
-        pushEvents: () => Promise.resolve([{ remoteId: "remote-1", success: true }]),
+        pushEvents: () => Promise.resolve([{ remoteId: "remote-1@keeper.sh", success: true }]),
       }),
     });
 
@@ -330,7 +330,7 @@ describe("syncCalendar instrumentation transparency", () => {
         localEvents,
         provider: makeProvider({
           pushEvents: (events) => Promise.resolve(
-            events.map((pushed) => ({ remoteId: `remote-${pushed.id}`, success: true })),
+            events.map((pushed) => ({ remoteId: `remote-${pushed.id}@keeper.sh`, success: true })),
           ),
         }),
       });

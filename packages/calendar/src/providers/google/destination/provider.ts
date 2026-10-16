@@ -1,7 +1,7 @@
 import { generateDeterministicEventUid, isKeeperEvent } from "../../../core/events/identity";
 import { ensureValidToken } from "../../../core/oauth/ensure-valid-token";
 import type { TokenState, TokenRefresher } from "../../../core/oauth/ensure-valid-token";
-import type { RedisRateLimiter } from "../../../core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../core/utils/request-rate-limiter";
 import type {
   DeleteResult,
   ListRemoteEventsOptions,
@@ -41,7 +41,7 @@ interface GoogleSyncProviderConfig {
   calendarId: string;
   userId: string;
   refreshAccessToken?: TokenRefresher;
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   signal?: AbortSignal;
 }
 

@@ -54,7 +54,7 @@ const createLocalEvent = (index: number): MaterializedSyncableEvent => ({
 const createMapping = (index: number): EventMapping => ({
   calendarId: DESTINATION_CALENDAR_ID,
   deleteIdentifier: `destination-event-${index}`,
-  destinationEventUid: `destination-uid-${index}`,
+  destinationEventUid: `destination-uid-${index}@keeper.sh`,
   endTime: createEndTime(index),
   eventStateId: `event-state-${index}`,
   id: `mapping-${index}`,
@@ -69,7 +69,7 @@ const createRemoteEvent = (index: number): RemoteEvent => ({
   endTime: createEndTime(index),
   isKeeperEvent: true,
   startTime: createStartTime(index),
-  uid: `destination-uid-${index}`,
+  uid: `destination-uid-${index}@keeper.sh`,
 });
 
 interface RecordedRead {
@@ -171,7 +171,7 @@ describe("the push path reads only what it writes", () => {
       event: localEvents[1],
       staleMappingId: "mapping-2",
       type: "replace",
-      uid: "destination-uid-2",
+      uid: "destination-uid-2@keeper.sh",
     });
   });
 

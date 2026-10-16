@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MaterializedSyncableEvent } from "../../../../src/core/types";
 import { createOutlookSyncProvider } from "../../../../src/providers/outlook/destination/provider";
-import type { RedisRateLimiter } from "../../../../src/core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../../src/core/utils/request-rate-limiter";
 import { KEEPER_CATEGORY } from "@keeper.sh/constants";
 
 const createProvider = (options: {
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   signal?: AbortSignal;
 } = {}) =>
   createOutlookSyncProvider({

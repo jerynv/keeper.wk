@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { RedisRateLimiter } from "../../../../src/core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../../src/core/utils/request-rate-limiter";
 import { createOutlookSourceFetcher } from "../../../../src/providers/outlook/source/fetch-adapter";
 import { createSourceIngestionPlan } from "../../../../src/core/sync/sync-range";
 
@@ -16,7 +16,7 @@ describe("createOutlookSourceFetcher rate limiter consumption", () => {
     const acquireCalls: number[] = [];
     let graphRequestsBeforeFirstAcquire = 0;
     let graphRequests = 0;
-    const rateLimiter: RedisRateLimiter = {
+    const rateLimiter: RequestRateLimiter = {
       acquire: (count: number): Promise<void> => {
         acquireCalls.push(count);
         return Promise.resolve();
@@ -37,7 +37,7 @@ describe("createOutlookSourceFetcher rate limiter consumption", () => {
 
     // Production passes the rate limiter through a widened params type, not the published one.
     const params: Parameters<typeof createOutlookSourceFetcher>[0] & {
-      rateLimiter?: RedisRateLimiter;
+      rateLimiter?: RequestRateLimiter;
     } = {
       accessToken: "test-token",
       calendarId: CALENDAR_ID,

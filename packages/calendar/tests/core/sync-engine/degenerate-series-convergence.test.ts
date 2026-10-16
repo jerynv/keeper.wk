@@ -72,7 +72,7 @@ const createGoogleHarness = (events: MaterializedSyncableEvent[]) => {
     })),
     normalizeEvent: normalizeGoogleEvent,
     pushEvents: (pushed) => Promise.resolve(pushed.map((event) => {
-      const uid = `keeper-${event.id}`;
+      const uid = `keeper-${event.id}@keeper.sh`;
       const payload = serializeGoogleEvent(event, uid);
       if (!payload) {
         return { error: "not serializable", success: false as const };

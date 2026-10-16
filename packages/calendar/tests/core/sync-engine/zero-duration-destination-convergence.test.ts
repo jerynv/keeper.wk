@@ -115,7 +115,7 @@ const createGoogleHarness = (options: HarnessOptions): Harness => {
     })),
     normalizeEvent: normalizeGoogleEvent,
     pushEvents: (events) => Promise.resolve(events.map((event) => {
-      const uid = `keeper-${event.id}`;
+      const uid = `keeper-${event.id}@keeper.sh`;
       const payload = serializeGoogleEvent(event, uid);
       if (!payload) {
         return { success: false as const, error: "not serializable" };
@@ -220,7 +220,7 @@ const createOutlookHarness = (options: HarnessOptions): Harness => {
     pushEvents: (events) => Promise.resolve(events.map((event) => {
       const payload = serializeOutlookEvent(event);
       const deleteId = `outlook-${stored.size}`;
-      const uid = `keeper-${event.id}`;
+      const uid = `keeper-${event.id}@keeper.sh`;
       stored.set(deleteId, { ...payload, iCalUId: uid, id: deleteId });
       return { deleteId, remoteId: uid, success: true as const };
     })),

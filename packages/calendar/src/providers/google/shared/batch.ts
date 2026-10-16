@@ -1,5 +1,5 @@
 import { HTTP_STATUS, PROVIDER_PUSH_REQUEST_TIMEOUT_MS } from "@keeper.sh/constants";
-import type { RedisRateLimiter } from "../../../core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../core/utils/request-rate-limiter";
 import { chunkArray } from "../../../core/utils/chunk";
 import { fetchWithTimeout } from "../../../core/utils/fetch-with-timeout";
 import { GOOGLE_BATCH_API, GOOGLE_BATCH_MAX_SIZE } from "./api";
@@ -235,7 +235,7 @@ class GoogleBatchApiError extends Error {
 const executeBatch = (
   subRequests: BatchSubRequest[],
   accessToken: string,
-  options?: { rateLimiter?: RedisRateLimiter; signal?: AbortSignal; timeoutMs?: number },
+  options?: { rateLimiter?: RequestRateLimiter; signal?: AbortSignal; timeoutMs?: number },
 ): Promise<BatchSubResponse[]> =>
   withBackoff(
     async () => {
@@ -293,7 +293,7 @@ const collectRateLimitedIndices = (responses: BatchSubResponse[]): number[] => {
 };
 
 interface BatchChunkedOptions {
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   signal?: AbortSignal;
   timeoutMs?: number;
 }

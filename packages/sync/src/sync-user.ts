@@ -3,8 +3,6 @@ import {
   getEventsForCalendarsWithDiagnostics,
   getEventMappingsForDestination,
   createDatabaseFlush,
-  createGoogleUserRateLimiter,
-  createRedisRateLimiter,
   buildCalendarBackoffState,
   RESET_CALENDAR_BACKOFF_STATE,
   createSyncWindow,
@@ -14,10 +12,8 @@ import {
   intersectSyncWindows,
   overlapsTimeWindow,
 } from "@keeper.sh/calendar";
-import { OUTLOOK_REQUESTS_PER_MINUTE } from "@keeper.sh/constants";
 import { syncRangeSchema } from "@keeper.sh/data-schemas";
 import type { Plan } from "@keeper.sh/data-schemas";
-import type { RedisRateLimiter } from "@keeper.sh/calendar";
 import type { SafeFetchOptions } from "@keeper.sh/calendar/safe-fetch";
 import type {
   EventMapping,
@@ -39,7 +35,6 @@ import { withDatabasePoolWindow } from "@keeper.sh/database";
 import type { DatabasePoolWindow } from "@keeper.sh/database";
 import { and, arrayContains, eq, inArray, isNull } from "drizzle-orm";
 import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
-import type Redis from "ioredis";
 import {
   getErrorMessage,
   resolveDestinationAttemptVerdict,
@@ -52,28 +47,7 @@ import {
   createMappingMutationLockId,
   createSyncLock,
 } from "./sync-lock";
-import type { SyncLockHandle } from "./sync-lock";
-
-/*
- * Google's quota is shared across ingest and push, so the push lane claims only its
- * reserved share of the one per-user key. Outlook throttles per mailbox instead, so it
- * gets a key of its own at the mailbox ceiling.
- */
-const createProviderRateLimiter = (
-  redis: Redis,
-  userId: string,
-  provider: string,
-): RedisRateLimiter | undefined => {
-  if (provider === "google") {
-    return createGoogleUserRateLimiter(redis, userId, "push");
-  }
-  if (provider !== "outlook") {
-    return;
-  }
-  return createRedisRateLimiter(redis, `ratelimit:${userId}:outlook`, {
-    requestsPerMinute: OUTLOOK_REQUESTS_PER_MINUTE,
-  });
-};
+import type { SyncLockHandle, SyncLockRedis } from "./sync-lock";
 
 const resetDestinationBackoff = async (
   database: BunSQLDatabase,
@@ -126,7 +100,7 @@ const extractNumericField = (event: Record<string, unknown> | null | undefined, 
 interface SyncConfig {
   destinationCalendarId: string;
   database: BunSQLDatabase;
-  redis: Redis;
+  redis: SyncLockRedis;
   encryptionKey?: string;
   oauthConfig: OAuthConfig;
   plan: Plan;
@@ -872,7 +846,6 @@ const syncDestinationsForUser = async (
           encryptionKey: config.encryptionKey,
           refreshLockStore: config.refreshLockStore,
           safeFetchOptions: config.safeFetchOptions,
-          rateLimiter: createProviderRateLimiter(redis, userId, destination.provider),
           signal: config.abortSignal,
         }));
         const syncProvider = providerResolve.value;

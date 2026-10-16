@@ -2,7 +2,7 @@ import { HTTP_STATUS } from "@keeper.sh/constants";
 import { createDAVClient, DAVNamespaceShort } from "tsdav";
 import { chunkArray } from "../../../core/utils/chunk";
 import { createSafeFetch } from "../../../utils/safe-fetch";
-import { sleepWithSignal } from "../../../core/utils/leased-semaphore";
+import { sleepWithSignal } from "../../../core/utils/sleep-with-signal";
 import { fetchHonouringRetryAfter } from "./throttle-retry";
 import {
   buildCalendarObjectFilters,

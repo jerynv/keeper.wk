@@ -31,12 +31,9 @@ export {
 export {
   ACCOUNTED_SEGMENT_KEY,
   measureProviderRequest,
-  measureRedisCommand,
   measureSegment,
   measureSyncSegment,
-  recordRedisCommandDuration,
   recordSegment,
-  REDIS_COMMAND_MAX_KEY,
   type IngestSegmentKey,
 } from "./core/telemetry/segments";
 export { isOAuthReauthRequiredError } from "./core/oauth/error-classification";
@@ -56,79 +53,6 @@ export {
   getDeterministicRefreshOffset,
   getOAuthSyncTokenVersion,
 } from "./core/oauth/sync-window";
-export {
-  FULL_POLL_INTERVAL_MS,
-  LIVE_PUSH_CHANNEL_STATES,
-  PUSH_HEALTHY_POLL_FLOOR_MS,
-  STALE_REGISTERING_MS,
-  isPushChannelGoneError,
-  planPushChannelActions,
-  resolveAffectedCalendarIds,
-  resolveIngestPollFloorMs,
-  resolvePushChannelHealth,
-  shouldRetainPushChannelAction,
-  toPushChannelState,
-} from "./core/source/push-channel";
-export type {
-  AccountCalendarRow,
-  AffectedCalendarDependencies,
-  EligibleSourceCalendar,
-  ListedPushChannel,
-  PushChannelAction,
-  PushChannelActionType,
-  PushChannelHealth,
-  PushChannelRegistration,
-  PushChannelRenewalMode,
-  PushChannelScope,
-  PushChannelState,
-  PushClaimKind,
-  PushPlanSkipReason,
-  PushRateLimiter,
-  RegistrarContext,
-  SourcePushRegistrar,
-  StoredPushChannel,
-} from "./core/source/push-channel";
-export {
-  clampToProviderLifetime,
-  resolvePushProviderProfile,
-  resolveRenewalLeadMs,
-} from "./core/source/push-provider-profile";
-export type { PushProviderProfile } from "./core/source/push-provider-profile";
-export {
-  buildUnknownChannelKey,
-  PENDING_CORRELATION_KEY,
-  PENDING_FAILURES_KEY,
-  PENDING_INGEST_KEY,
-  PENDING_REWAKE_KEY,
-  PENDING_SIGNAL_KEY,
-  SIGNAL_READER_HEARTBEAT_KEY,
-  UNKNOWN_CHANNEL_PREFIX,
-} from "./core/source/push-keys";
-export {
-  PENDING_SIGNAL_MAX_LENGTH,
-  PENDING_SIGNAL_TTL_SECONDS,
-  signalPendingCalendars,
-  type PendingSignalRedis,
-} from "./core/source/pending-signal";
-export { resolvePushRegistrar } from "./core/source/push-registry";
-export {
-  generatePushSecret,
-  hashPushSecret,
-  verifyPushSecret,
-} from "./core/source/push-secret";
-export { resolveWebhookConfig } from "./core/source/push-webhook-url";
-export type { WebhookConfig } from "./core/source/push-webhook-url";
-export type {
-  PushClaim,
-  PushHttpRequest,
-  PushParseFailureReason,
-  PushParseResult,
-} from "./core/source/push-notification";
-export { parseGooglePushNotification } from "./providers/google/push/receiver";
-export {
-  parseOutlookPushNotification,
-  readGraphValidationToken,
-} from "./providers/outlook/push/receiver";
 export {
   decodeStoredSyncToken,
   encodeStoredSyncToken,
@@ -151,8 +75,8 @@ export {
   wallTimeToInstant,
 } from "./ics/utils/timezone-instant";
 export { RateLimiter, type RateLimiterConfig } from "./core/utils/rate-limiter";
-export { CALDAV_ACCOUNT_REQUESTS_PER_MINUTE, FASTMAIL_ACCOUNT_REQUESTS_PER_MINUTE, ICLOUD_ACCOUNT_REQUESTS_PER_MINUTE, createCalDAVAccountRateLimiter, createGoogleUserRateLimiter, createHostRateLimiter, createOutlookAccountRequestLimiter, createOutlookAccountSemaphore, createOutlookRequestLimiter, createRedisRateLimiter, type HostRateLimiterOptions, type OutlookAccountSemaphore, type RedisRateLimiter, type RedisRateLimiterConfig } from "./core/utils/redis-rate-limiter";
-export { createLeasedSemaphore, type LeasedSemaphore, type LeasedSemaphoreConfig, type RedisLeaseClient, type SemaphoreLease } from "./core/utils/leased-semaphore";
+export type { RateLimiterPermit, RequestRateLimiter } from "./core/utils/request-rate-limiter";
+export { sleepWithSignal } from "./core/utils/sleep-with-signal";
 export { flagPacingParkAbortReason, isIngestPacingParkAbortError } from "./core/utils/pacing-park";
 export { allSettledGroupedWithConcurrency, allSettledWithConcurrency, type AllSettledGroupedOptions, type AllSettledWithConcurrencyOptions } from "./core/utils/concurrency";
 export { getErrorMessage } from "./core/utils/error";
@@ -280,17 +204,6 @@ export {
   type SyncStage,
 } from "./core/sync/types";
 export {
-  SyncAggregateTracker,
-  type SyncAggregateSnapshot,
-  type SyncAggregateMessage,
-  type SyncAggregateTrackerConfig,
-} from "./core/sync/aggregate-tracker";
-export {
-  createSyncAggregateRuntime,
-  type SyncAggregateRuntimeConfig,
-  type SyncAggregateRuntime,
-} from "./core/sync/aggregate-runtime";
-export {
   getEventMappingsForDestination,
   createEventMapping,
   deleteEventMapping,
@@ -372,8 +285,6 @@ export type {
   PendingChanges,
   SyncCalendarOptions,
 } from "./core/sync-engine";
-export { createRedisGenerationCheck } from "./core/sync-engine/generation";
-export type { GenerationStore } from "./core/sync-engine/generation";
 export { createDatabaseFlush } from "./core/sync-engine/flush";
 export { ingestSource } from "./core/sync-engine/ingest";
 export { createConcurrencyGate } from "./core/utils/concurrency-gate";
@@ -394,17 +305,3 @@ export type {
   IngestWideEventFields,
   FetchEventsResult as IngestionFetchEventsResult,
 } from "./core/sync-engine/ingest";
-
-export {
-  MAX_DEREGISTER_ATTEMPTS,
-  PUSH_ACTIONS_PER_TICK,
-  runManagePushChannels,
-} from "./core/source/manage-push-channels";
-export type {
-  ManagePushChannelsDependencies,
-  RegistrarContextRequest,
-} from "./core/source/manage-push-channels";
-export { createManagePushChannelsDependencies } from "./core/source/manage-push-channels-dependencies";
-export type { ManagePushChannelsConfig } from "./core/source/manage-push-channels-dependencies";
-export { createRegistrarContextFactory } from "./core/source/push-registrar-context";
-export type { RegistrarContextConfig } from "./core/source/push-registrar-context";

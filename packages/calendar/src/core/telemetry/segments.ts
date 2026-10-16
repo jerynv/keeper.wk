@@ -29,7 +29,6 @@ type IngestSegmentKey =
   | "work.diff_ms";
 
 const ACCOUNTED_SEGMENT_KEY = "accounted_ms";
-const REDIS_COMMAND_MAX_KEY = "redis.command_ms_max";
 const MILLISECOND_PRECISION = 100;
 
 const roundMs = (durationMs: number): number =>
@@ -79,35 +78,11 @@ const measureProviderRequest = async <TResult>(
   }
 };
 
-/*
- * An overlay, never a segment: these round trips already sit inside
- * wait.source_lock_ms and wait.rate_limiter_ms, so crediting accounted_ms here
- * would double count. It exists only to split "the lock was held" from
- * "Redis was slow".
- */
-const recordRedisCommandDuration = (durationMs: number): void => {
-  widelog.max(REDIS_COMMAND_MAX_KEY, roundMs(durationMs));
-};
-
-const measureRedisCommand = async <TResult>(
-  operation: () => Promise<TResult>,
-): Promise<TResult> => {
-  const startedAt = performance.now();
-  try {
-    return await operation();
-  } finally {
-    recordRedisCommandDuration(performance.now() - startedAt);
-  }
-};
-
 export {
   ACCOUNTED_SEGMENT_KEY,
   measureProviderRequest,
-  measureRedisCommand,
   measureSegment,
   measureSyncSegment,
-  recordRedisCommandDuration,
   recordSegment,
-  REDIS_COMMAND_MAX_KEY,
 };
 export type { IngestSegmentKey };

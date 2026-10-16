@@ -1,5 +1,5 @@
 import type { FetchEventsResult } from "../../../core/sync-engine/ingest";
-import type { RedisRateLimiter } from "../../../core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../core/utils/request-rate-limiter";
 import type { SourceIngestionPlan } from "../../../core/sync/sync-range";
 import {
   decodeStoredSyncToken,
@@ -19,7 +19,7 @@ interface OutlookSourceFetcherConfig {
   externalCalendarId: string;
   syncToken: string | null;
   excludesTentative?: boolean;
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   signal?: AbortSignal;
   plan: SourceIngestionPlan;
 }

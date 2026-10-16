@@ -21,7 +21,7 @@ import { ensureValidToken } from "../../../core/oauth/ensure-valid-token";
 import type { TokenState, TokenRefresher } from "../../../core/oauth/ensure-valid-token";
 import { withBackoff } from "../../../core/utils/backoff";
 import type { BackoffRetry } from "../../../core/utils/backoff";
-import type { RedisRateLimiter } from "../../../core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../core/utils/request-rate-limiter";
 import {
   getThrottleRetryDelayMs,
   isThrottledError,
@@ -48,7 +48,7 @@ interface OutlookSyncProviderConfig {
   calendarId: string;
   userId: string;
   refreshAccessToken?: TokenRefresher;
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   signal?: AbortSignal;
 }
 

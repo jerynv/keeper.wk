@@ -196,7 +196,7 @@ const createGoogleHarness = (options: HarnessOptions): Harness => {
     listRemoteEvents,
     normalizeEvent: normalizeGoogleEvent,
     pushEvents: (events) => Promise.resolve(events.map((event) => {
-      const uid = `keeper-${event.id}`;
+      const uid = `keeper-${event.id}@keeper.sh`;
       const payload = serializeGoogleEvent(event, uid);
       if (!payload) {
         return { error: "not serializable", success: false as const };

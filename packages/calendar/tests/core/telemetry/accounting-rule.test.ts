@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { widelog, widelogger } from "widelogger";
 import {
   measureSegment,
-  recordRedisCommandDuration,
   recordSegment,
   type IngestSegmentKey,
 } from "../../../src/core/telemetry/segments";
@@ -113,18 +112,6 @@ describe("segment accounting", () => {
 
     expect(readNested(event, "work.db_read_ms")).toBeCloseTo(25, 2);
     expect(readNested(event, "accounted_ms")).toBeCloseTo(25, 2);
-  });
-
-  it("keeps the redis overlay out of the accounted sum", async () => {
-    const event = await runEvent(async () => {
-      recordSegment("wait.source_lock_ms", 50);
-      recordRedisCommandDuration(30);
-      recordRedisCommandDuration(10);
-      await Promise.resolve();
-    });
-
-    expect(readNested(event, "redis.command_ms_max")).toBeCloseTo(30, 2);
-    expect(readNested(event, "accounted_ms")).toBeCloseTo(50, 2);
   });
 
   it("still records the segment when the measured operation throws", async () => {

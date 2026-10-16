@@ -42,7 +42,7 @@ const createLocalEvent = (index: number): MaterializedSyncableEvent => ({
 const createInWindowMapping = (index: number): EventMapping => ({
   calendarId: DESTINATION_CALENDAR_ID,
   deleteIdentifier: `in-window-event-${index}`,
-  destinationEventUid: `in-window-uid-${index}`,
+  destinationEventUid: `in-window-uid-${index}@keeper.sh`,
   endTime: withHalfHour(createInWindowStart(index)),
   eventStateId: `event-state-${index}`,
   id: `in-window-mapping-${index}`,
@@ -55,7 +55,7 @@ const createInWindowMapping = (index: number): EventMapping => ({
 const createHistoricalMapping = (index: number): EventMapping => ({
   calendarId: DESTINATION_CALENDAR_ID,
   deleteIdentifier: `historical-event-${index}`,
-  destinationEventUid: `historical-uid-${index}`,
+  destinationEventUid: `historical-uid-${index}@keeper.sh`,
   endTime: withHalfHour(createHistoricalStart(index)),
   eventStateId: `historical-event-state-${index}`,
   id: `historical-mapping-${index}`,

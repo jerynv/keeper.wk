@@ -224,7 +224,7 @@ const setProvider = (overrides: {
     pushEvents: overrides.pushEvents
       ?? ((events: MaterializedSyncableEvent[]) =>
         Promise.resolve(events.map((_event, index) => ({
-          remoteId: `remote-${index}`,
+          remoteId: `remote-${index}@keeper.sh`,
           success: true,
         })))),
   };
@@ -339,7 +339,7 @@ describe("a destination the provider always rejects, driven by the real schedule
           if (!healthy) {
             return { error: "rejected", success: false };
           }
-          const remoteId = `remote-${index}`;
+          const remoteId = `remote-${index}@keeper.sh`;
           remote.set(remoteId, makeRemoteEvent(remoteId, event.startTime));
           return { remoteId, success: true };
         }));
@@ -382,7 +382,7 @@ describe("a destination whose every run is cut short by the worker deadline", ()
       pushEvents: (events) => {
         pushAttempts.push(Date.now());
         return Promise.resolve(events.map((_event, index) => ({
-          remoteId: `remote-${index}`,
+          remoteId: `remote-${index}@keeper.sh`,
           success: true,
         })));
       },
@@ -590,12 +590,12 @@ describe("a mirror replaced by a push the provider accepts without a remote id",
     const { database, row } = createHarness();
     const event = makeEvent("ev-1", new Date("2026-03-10T09:00:00.000Z"));
     const staleMapping = {
-      ...makeMapping("map-1", event, "remote-1"),
+      ...makeMapping("map-1", event, "remote-1@keeper.sh"),
       syncEventHash: "stale-hash",
     };
     mappingStore.set(staleMapping.id, staleMapping);
     localEventsMock.mockImplementation(() => [event]);
-    const remote = new Map([["remote-1", makeRemoteEvent("remote-1", event.startTime)]]);
+    const remote = new Map([["remote-1@keeper.sh", makeRemoteEvent("remote-1@keeper.sh", event.startTime)]]);
     const deleted: string[] = [];
     const pushed: string[] = [];
     setProvider({
@@ -618,7 +618,7 @@ describe("a mirror replaced by a push the provider accepts without a remote id",
       await syncDestinationsForUser(USER_ID, config(database));
     }
 
-    expect(deleted).toEqual(["remote-1"]);
+    expect(deleted).toEqual(["remote-1@keeper.sh"]);
     expect(pushed.length).toBeGreaterThan(0);
     expect(row.failureCount).toBe(0);
   });
@@ -628,7 +628,7 @@ describe("a mirror the provider refuses to delete", () => {
   it("does not re-create the mirror it just failed to remove", async () => {
     const { database } = createHarness();
     const orphan = makeEvent("ev-1", new Date("2026-03-10T09:00:00.000Z"));
-    const orphanMapping = makeMapping("map-1", orphan, "remote-1");
+    const orphanMapping = makeMapping("map-1", orphan, "remote-1@keeper.sh");
     mappingStore.set(orphanMapping.id, orphanMapping);
     localEventsMock.mockImplementation(() => []);
     const pushed: string[] = [];
@@ -638,12 +638,12 @@ describe("a mirror the provider refuses to delete", () => {
         success: false,
       }))),
       listRemoteEvents: () => Promise.resolve([
-        makeRemoteEvent("remote-1", orphan.startTime),
+        makeRemoteEvent("remote-1@keeper.sh", orphan.startTime),
       ]),
       pushEvents: (events) => {
         pushed.push(...events.map((event) => event.id));
         return Promise.resolve(events.map((_event, index) => ({
-          remoteId: `remote-${index}`,
+          remoteId: `remote-${index}@keeper.sh`,
           success: true,
         })));
       },

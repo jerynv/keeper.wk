@@ -162,20 +162,6 @@ describe("0077 self-hosted upgrade compatibility", () => {
     expect(sourceCalendarBackfill).toContain("isNotNull(eventMappingsTable.eventStateId)");
   });
 
-  it("ships migration runtime dependencies and gates separate services on API readiness", async () => {
-    const repositoryRoot = `${import.meta.dirname}/../../../..`;
-    for (const dockerfile of [
-      "services/api/Dockerfile",
-      "docker/services/Dockerfile",
-      "docker/standalone/Dockerfile",
-    ]) {
-      const content = await Bun.file(`${repositoryRoot}/${dockerfile}`).text();
-      expect(content).toContain("packages/data-schemas/src");
-    }
-
-    const compose = await Bun.file(`${repositoryRoot}/deploy/compose.yaml`).text();
-    expect(compose).toContain("condition: service_healthy");
-  });
 });
 
 /*

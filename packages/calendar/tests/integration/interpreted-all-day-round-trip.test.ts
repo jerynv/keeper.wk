@@ -192,7 +192,7 @@ class RoundTrippingDestinationProvider implements CalendarSyncProvider {
   public pushEvents = (events: MaterializedSyncableEvent[]) => {
     this.writes.pushes += events.length;
     return Promise.resolve(events.map((event) => {
-      const remoteId = `remote-${this.nextRemoteId++}`;
+      const remoteId = `remote-${this.nextRemoteId++}@keeper.sh`;
       const uid = generateDeterministicEventUid(`${event.calendarId}:${event.id}`);
       const times = this.codec(event, uid);
       this.remoteEvents.set(remoteId, {

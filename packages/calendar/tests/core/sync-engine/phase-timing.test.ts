@@ -121,7 +121,7 @@ describe("syncCalendar phase attribution", () => {
       provider: makeProvider({
         pushEvents: async () => {
           await delay(10);
-          return [{ remoteId: "remote-1", success: true }];
+          return [{ remoteId: "remote-1@keeper.sh", success: true }];
         },
       }),
     });
@@ -135,8 +135,8 @@ describe("syncCalendar phase attribution", () => {
     const localEvent = makeEvent("ev-1");
     const mapping: EventMapping = {
       calendarId: "dest-cal-1",
-      deleteIdentifier: "remote-1",
-      destinationEventUid: "remote-1",
+      deleteIdentifier: "remote-1@keeper.sh",
+      destinationEventUid: "remote-1@keeper.sh",
       endTime: localEvent.endTime,
       eventStateId: "ev-1",
       id: "map-1",
@@ -160,11 +160,11 @@ describe("syncCalendar phase attribution", () => {
         },
       }),
       remoteEvents: [{
-        deleteId: "remote-1",
+        deleteId: "remote-1@keeper.sh",
         endTime: localEvent.endTime,
         isKeeperEvent: true,
         startTime: localEvent.startTime,
-        uid: "remote-1",
+        uid: "remote-1@keeper.sh",
       }],
     });
 
@@ -221,7 +221,7 @@ describe("syncCalendar phase attribution", () => {
     const provider = makeProvider({
       pushEvents: async () => {
         await delay(15);
-        return [{ remoteId: "remote-1", success: true }];
+        return [{ remoteId: "remote-1@keeper.sh", success: true }];
       },
     });
 
@@ -258,7 +258,7 @@ describe("syncCalendar phase attribution", () => {
   it("passes provider arguments and results through untouched", async () => {
     const pushed: MaterializedSyncableEvent[][] = [];
     const localEvent = makeEvent("ev-1");
-    const pushResult: PushResult = { remoteId: "remote-1", success: true };
+    const pushResult: PushResult = { remoteId: "remote-1@keeper.sh", success: true };
 
     const event = await runSync({
       localEvents: [localEvent],
@@ -279,7 +279,7 @@ describe("syncCalendar phase attribution", () => {
     const event = await runSync({
       localEvents: [makeEvent("ev-1")],
       provider: makeProvider({
-        pushEvents: () => Promise.resolve([{ remoteId: "remote-1", success: true }]),
+        pushEvents: () => Promise.resolve([{ remoteId: "remote-1@keeper.sh", success: true }]),
       }),
     });
 

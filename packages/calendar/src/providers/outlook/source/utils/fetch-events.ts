@@ -6,7 +6,7 @@ import type {
   EventTimeSlot,
 } from "../types";
 import type { MicrosoftApiError, OutlookDateTime } from "../../types";
-import type { RedisRateLimiter } from "../../../../core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../../core/utils/request-rate-limiter";
 import { MICROSOFT_GRAPH_API, GONE_STATUS } from "../../shared/api";
 import { isAuthError, isSimpleAuthError } from "../../shared/errors";
 import { parseEventTime } from "../../shared/date-time";
@@ -106,7 +106,7 @@ interface PageFetchOptions {
   timeMin?: Date;
   timeMax?: Date;
   nextLink?: string;
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   signal?: AbortSignal;
 }
 
@@ -284,7 +284,7 @@ const fetchSeriesMasterInstances = async (
   timeMin: Date,
   timeMax: Date,
   signal?: AbortSignal,
-  rateLimiter?: RedisRateLimiter,
+  rateLimiter?: RequestRateLimiter,
 ): Promise<OutlookCalendarEvent[]> => {
   const calendarPath = encodeURIComponent(calendarId);
   const masterPath = encodeURIComponent(masterId);
@@ -329,7 +329,7 @@ const expandSeriesMasters = async (
   timeMin: Date,
   timeMax: Date,
   signal?: AbortSignal,
-  rateLimiter?: RedisRateLimiter,
+  rateLimiter?: RequestRateLimiter,
 ): Promise<ExpandedSeriesMasters> => {
   const passthrough: OutlookCalendarEvent[] = [];
   const masterIds: string[] = [];

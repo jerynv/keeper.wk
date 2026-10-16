@@ -35,7 +35,7 @@ const createMirror = (index: number): MirrorFixture => {
   const mapping: EventMapping = {
     calendarId: "destination-calendar-id",
     deleteIdentifier: `delete-identifier-${index}`,
-    destinationEventUid: `destination-uid-${index}`,
+    destinationEventUid: `destination-uid-${index}@keeper.sh`,
     endTime,
     eventStateId: `event-state-id-${index}`,
     id: `mapping-id-${index}`,

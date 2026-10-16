@@ -1,5 +1,5 @@
 import type { FetchEventsResult } from "../../../core/sync-engine/ingest";
-import type { RedisRateLimiter } from "../../../core/utils/redis-rate-limiter";
+import type { RequestRateLimiter } from "../../../core/utils/request-rate-limiter";
 import type { SourceIngestionPlan } from "../../../core/sync/sync-range";
 import { encodeStoredSyncToken, resolveSyncTokenForWindow } from "../../../core/oauth/sync-token";
 import { getOAuthSyncTokenVersion } from "../../../core/oauth/sync-window";
@@ -12,7 +12,7 @@ interface GoogleSourceFetcherConfig {
   calendarId: string;
   externalCalendarId: string;
   syncToken: string | null;
-  rateLimiter?: RedisRateLimiter;
+  rateLimiter?: RequestRateLimiter;
   signal?: AbortSignal;
   plan: SourceIngestionPlan;
 }

@@ -1,5 +1,5 @@
 {
-  "name": "keeper.sh",
+  "name": "keeper-cf",
   "devDependencies": {
     "knip": "5.80.0",
     "oxlint": "^1.55.0",
@@ -14,11 +14,7 @@
   "private": true,
   "scripts": {
     "clean": "rimraf --glob **/{.turbo,node_modules,.next/}/",
-    "dev": "turbo run dev dev:root",
-    "dev:root": "docker compose up --force-recreate",
     "types": "turbo run types --parallel",
-    "build": "turbo run build",
-    "start": "turbo run start",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "unused": "knip"
@@ -26,9 +22,7 @@
   "type": "module",
   "workspaces": {
     "packages": [
-      "packages/*",
-      "applications/*",
-      "services/*"
+      "packages/*"
     ]
   }
 }

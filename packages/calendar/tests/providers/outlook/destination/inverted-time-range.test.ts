@@ -111,7 +111,7 @@ describe("outlook destination representation of an inverted timed range", () => 
             attempts.push("The end date must be after the start date.");
             return { error: "The end date must be after the start date.", success: false as const };
           }
-          const uid = `keeper-${event.id}`;
+          const uid = `keeper-${event.id}@keeper.sh`;
           stored.set(event.id, { ...payload, iCalUId: uid, id: event.id });
           return { deleteId: event.id, remoteId: uid, success: true as const };
         })),
