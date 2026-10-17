@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { widelog, widelogger } from "../../../src/core/telemetry/widelog";
+import { createSecretCodec } from "@keeper.sh/database";
 import type { Database as BunSQLDatabase } from "@keeper.sh/database";
 import { createCoordinatedRefresher } from "../../../src/core/oauth/coordinated-refresher";
+
+// 32 zero bytes, base64: a fixed key so the test needs no secret.
+const TOKEN_CODEC = createSecretCodec("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
 interface EmittedEvent {
   outcome?: string;
@@ -73,6 +77,7 @@ const refresh = async (
     oauthCredentialId: "credential-under-test",
     rawRefresh: () => Promise.resolve(grantOf(rotatedToken)),
     refreshLockStore: null,
+    tokenCodec: TOKEN_CODEC,
   });
   const failures: string[] = [];
   await context(async () => {
@@ -99,7 +104,12 @@ describe("persisting a refreshed credential", () => {
 
     expect(failure).toBeNull();
     expect(persistence.attempts).toBe(3);
-    expect(persistence.stored[0]?.refreshToken).toBe("rotated-refresh-token");
+    // Stored sealed, and it is the rotated token once opened.
+    const stored = persistence.stored[0] ?? {};
+    expect(stored.refreshToken).not.toBe("rotated-refresh-token");
+    expect(stored.accessToken).not.toBe("fresh-access");
+    expect(TOKEN_CODEC.open(String(stored.refreshToken))).toBe("rotated-refresh-token");
+    expect(TOKEN_CODEC.open(String(stored.accessToken))).toBe("fresh-access");
     expect(eventWithToken()?.persist_attempts).toBe(3);
   });
 

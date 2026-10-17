@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { widelog, widelogger } from "../../../src/core/telemetry/widelog";
+import { createSecretCodec } from "@keeper.sh/database";
 import type { Database as BunSQLDatabase } from "@keeper.sh/database";
 import { createCoordinatedRefresher } from "../../../src/core/oauth/coordinated-refresher";
+
+// 32 zero bytes, base64: a fixed key so the test needs no secret.
+const TOKEN_CODEC = createSecretCodec("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
 interface EmittedEvent {
   provider?: { account_id?: string };
@@ -85,6 +89,7 @@ const refreshOnce = async (
     oauthCredentialId: `credential-${String(credentialSequence)}`,
     rawRefresh,
     refreshLockStore: null,
+    tokenCodec: TOKEN_CODEC,
   });
   await context(async () => {
     try {

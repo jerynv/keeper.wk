@@ -12,3 +12,6 @@ applications/mobile/
 
 # turbo prune --docker output
 out/
+
+# wrangler dev local state (D1, queues)
+.wrangler/

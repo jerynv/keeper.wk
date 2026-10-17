@@ -12,7 +12,7 @@ import { createOutlookSyncProvider } from "@keeper.sh/calendar/outlook";
 import { createCalDAVSyncProvider } from "@keeper.sh/calendar/caldav";
 import { resolveAuthMethod } from "@keeper.sh/calendar/digest-fetch";
 import { PROVIDER_PUSH_REQUEST_TIMEOUT_MS } from "@keeper.sh/constants";
-import { decryptPassword } from "@keeper.sh/database";
+import { createSecretCodec, decryptPassword } from "@keeper.sh/database";
 import {
   calendarAccountsTable,
   calendarsTable,
@@ -38,10 +38,13 @@ const resolveOAuthProvider = async (
   userId: string,
   accountId: string,
   oauthConfig: OAuthConfig,
+  encryptionKey: string,
   refreshLockStore: RefreshLockStore | null,
   rateLimiter?: RequestRateLimiter,
   signal?: AbortSignal,
 ): Promise<CalendarSyncProvider | null> => {
+  // OAuth tokens are sealed at rest with the same key as CalDAV passwords.
+  const tokenCodec = createSecretCodec(encryptionKey);
   const [oauthCred] = await database
     .select({
       accessToken: oauthCredentialsTable.accessToken,
@@ -69,8 +72,8 @@ const resolveOAuthProvider = async (
       clientSecret: oauthConfig.googleClientSecret,
     });
     return createGoogleSyncProvider({
-      accessToken: oauthCred.accessToken,
-      refreshToken: oauthCred.refreshToken,
+      accessToken: tokenCodec.open(oauthCred.accessToken),
+      refreshToken: tokenCodec.open(oauthCred.refreshToken),
       accessTokenExpiresAt: oauthCred.expiresAt,
       externalCalendarId: oauthCred.externalCalendarId,
       calendarId,
@@ -81,6 +84,7 @@ const resolveOAuthProvider = async (
         calendarAccountId: accountId,
         refreshLockStore,
         rawRefresh: (refreshToken) => refreshGoogleToken(refreshToken),
+        tokenCodec,
       }),
       rateLimiter,
       signal,
@@ -96,8 +100,8 @@ const resolveOAuthProvider = async (
       clientSecret: oauthConfig.microsoftClientSecret,
     });
     return createOutlookSyncProvider({
-      accessToken: oauthCred.accessToken,
-      refreshToken: oauthCred.refreshToken,
+      accessToken: tokenCodec.open(oauthCred.accessToken),
+      refreshToken: tokenCodec.open(oauthCred.refreshToken),
       accessTokenExpiresAt: oauthCred.expiresAt,
       externalCalendarId: oauthCred.externalCalendarId,
       calendarId,
@@ -108,6 +112,7 @@ const resolveOAuthProvider = async (
         calendarAccountId: accountId,
         refreshLockStore,
         rawRefresh: (refreshToken) => refreshMicrosoftToken(refreshToken),
+        tokenCodec,
       }),
       rateLimiter,
       signal,
@@ -174,7 +179,7 @@ interface ResolveProviderOptions {
 }
 
 const resolveSyncProvider = (options: ResolveProviderOptions): Promise<CalendarSyncProvider | null> => {
-  if (OAUTH_PROVIDERS.has(options.provider)) {
+  if (OAUTH_PROVIDERS.has(options.provider) && options.encryptionKey) {
     return resolveOAuthProvider(
       options.database,
       options.provider,
@@ -182,6 +187,7 @@ const resolveSyncProvider = (options: ResolveProviderOptions): Promise<CalendarS
       options.userId,
       options.accountId,
       options.oauthConfig,
+      options.encryptionKey,
       options.refreshLockStore ?? null,
       options.rateLimiter,
       options.signal,

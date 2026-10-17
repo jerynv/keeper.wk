@@ -15,7 +15,8 @@ export {
   resolveDatabaseErrorClassification,
 } from "./errors";
 export type { DatabaseErrorClassification, DatabaseErrorDetails } from "./errors";
-export { encryptPassword, decryptPassword } from "./encryption";
+export { createSecretCodec, encryptPassword, decryptPassword } from "./encryption";
+export type { SecretCodec } from "./encryption";
 export {
   LeaseUnavailableError,
   acquireLease,

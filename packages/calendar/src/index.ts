@@ -36,6 +36,8 @@ export {
   recordSegment,
   type IngestSegmentKey,
 } from "./core/telemetry/segments";
+export { widelog, widelogger } from "./core/telemetry/widelog";
+export type { WideEvent, WideEventTransport, WideloggerOptions } from "./core/telemetry/widelog";
 export { isOAuthReauthRequiredError } from "./core/oauth/error-classification";
 export {
   buildReauthenticationDemandFields,

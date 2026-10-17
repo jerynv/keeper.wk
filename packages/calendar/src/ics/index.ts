@@ -4,7 +4,11 @@ export { parseIcsEvents, parseIcsEventsWithDiagnostics } from "./utils/parse-ics
 export type { ParsedIcsEventDiagnostics } from "./utils/parse-ics-events";
 export { parseIcsCalendar } from "./utils/parse-ics-calendar";
 export { diffEvents } from "./utils/diff-events";
-export { persistCalendarSnapshot, prepareCalendarSnapshot } from "./utils/create-snapshot";
+export {
+  buildPersistCalendarSnapshot,
+  persistCalendarSnapshot,
+  prepareCalendarSnapshot,
+} from "./utils/create-snapshot";
 export {
   applyCalendarTimeZoneToFloatingEventDates,
   createIcsSourceFetcher,

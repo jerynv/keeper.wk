@@ -35,4 +35,22 @@ const decryptPassword = (encryptedData: string, key: string): string => {
   return encodeUTF8(decrypted);
 };
 
-export { encryptPassword, decryptPassword };
+/*
+ * Seals a secret for storage and opens it again. OAuth tokens go through this as well
+ * as CalDAV passwords, so nothing that can act on your calendars sits in D1 in the clear.
+ */
+interface SecretCodec {
+  open: (sealed: string) => string;
+  seal: (secret: string) => string;
+}
+
+const createSecretCodec = (key: string): SecretCodec => {
+  parseKey(key);
+  return {
+    open: (sealed) => decryptPassword(sealed, key),
+    seal: (secret) => encryptPassword(secret, key),
+  };
+};
+
+export { createSecretCodec, encryptPassword, decryptPassword };
+export type { SecretCodec };

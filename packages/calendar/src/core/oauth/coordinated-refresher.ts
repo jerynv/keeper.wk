@@ -1,4 +1,4 @@
-import type { Database } from "@keeper.sh/database";
+import type { Database, SecretCodec } from "@keeper.sh/database";
 import type { CredentialRefreshResult, RefreshLockStore } from "./refresh-coordinator";
 import { runWithCredentialRefreshLock } from "./refresh-coordinator";
 import { isOAuthOperatorFaultError, isOAuthReauthRequiredError } from "./error-classification";
@@ -31,12 +31,18 @@ const persistRefreshedCredential = async (
   database: Database,
   oauthCredentialId: string,
   credential: RefreshedCredential,
+  tokenCodec: SecretCodec,
 ): Promise<void> => {
+  const sealed = {
+    ...credential,
+    accessToken: tokenCodec.seal(credential.accessToken),
+    refreshToken: tokenCodec.seal(credential.refreshToken),
+  };
   for (let attempt = 1; attempt <= PERSIST_ATTEMPTS; attempt++) {
     try {
       await database
         .update(oauthCredentialsTable)
-        .set(credential)
+        .set(sealed)
         .where(eq(oauthCredentialsTable.id, oauthCredentialId));
       widelog.set("token.persist_attempts", attempt);
       return;
@@ -56,6 +62,8 @@ interface CoordinatedRefresherOptions {
   oauthCredentialId: string;
   calendarAccountId: string;
   refreshLockStore: RefreshLockStore | null;
+  // Tokens are sealed at rest; required so no caller can store them in the clear by omission.
+  tokenCodec: SecretCodec;
   rawRefresh: (refreshToken: string) => Promise<{
     access_token: string;
     expires_in: number;
@@ -64,7 +72,14 @@ interface CoordinatedRefresherOptions {
 }
 
 const createCoordinatedRefresher = (options: CoordinatedRefresherOptions) => {
-  const { database, oauthCredentialId, calendarAccountId, refreshLockStore, rawRefresh } = options;
+  const {
+    calendarAccountId,
+    database,
+    oauthCredentialId,
+    rawRefresh,
+    refreshLockStore,
+    tokenCodec,
+  } = options;
 
   /*
    * A peer that won the lock persists before releasing it, so its result is readable here.
@@ -91,7 +106,7 @@ const createCoordinatedRefresher = (options: CoordinatedRefresherOptions) => {
       return null;
     }
     return {
-      access_token: stored.accessToken,
+      access_token: tokenCodec.open(stored.accessToken),
       expires_in: Math.floor(remainingMs / MS_PER_SECOND),
     };
   };
@@ -112,7 +127,7 @@ const createCoordinatedRefresher = (options: CoordinatedRefresherOptions) => {
               accessToken: result.access_token,
               expiresAt: newExpiresAt,
               refreshToken: result.refresh_token ?? refreshToken,
-            });
+            }, tokenCodec);
           } catch (error) {
             widelog.set("token.rotation_lost", rotated);
             throw error;
