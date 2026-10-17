@@ -148,6 +148,21 @@ describe("Cloudflare Access verification", () => {
     expect(response.status).toBe(403);
   });
 
+  it("serves only the static privacy page without a token", async () => {
+    const get = (path: string) => worker.fetch?.(
+      new Request(`${ORIGIN}${path}`) as Request<unknown, IncomingRequestCfProperties>,
+      accessEnv,
+      createExecutionContext(),
+    ) as Promise<Response>;
+
+    const privacy = await get("/privacy");
+    expect(privacy.status).toBe(200);
+    expect(await privacy.text()).toContain("<h1>Privacy</h1>");
+    for (const path of ["/privacy/", "/api/privacy", "/privacy/../api/accounts"]) {
+      expect((await get(path)).status, path).toBe(403);
+    }
+  });
+
   it("guards every route, including the OAuth callback and form posts", async () => {
     publishedKeys = [trusted.jwk];
     serveCerts();

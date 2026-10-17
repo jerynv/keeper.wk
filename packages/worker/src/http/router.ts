@@ -2,6 +2,7 @@ import { createDatabase } from "@keeper.sh/database";
 import { routeApi } from "../api/routes";
 import type { Env } from "../env";
 import { authenticateRequest, forbidden } from "./access";
+import { privacyPage } from "./privacy";
 
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
@@ -25,6 +26,9 @@ const withApiHeaders = (response: Response): Response => {
  * other path is the dashboard (applications/web), a single-page app.
  */
 const handleRequest = async (request: Request, env: Env): Promise<Response> => {
+  if (new URL(request.url).pathname === "/privacy" && request.method === "GET") {
+    return privacyPage();
+  }
   const identity = await authenticateRequest(request, {
     audience: env.ACCESS_AUD,
     ownerEmail: env.OWNER_EMAIL,

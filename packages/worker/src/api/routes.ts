@@ -699,40 +699,40 @@ const routeApi = async (context: ApiContext): Promise<Response> => {
   const { request, url } = context;
   const segments = url.pathname.split("/").filter(Boolean).slice(1);
   const [resource, id, action] = segments;
-  const method = request.method;
+  const {method} = request;
 
   if (resource === "accounts") {
-    if (!id && method === "GET") return listAccounts(context);
-    if (id === "refresh-calendars" && method === "POST") return refreshAllAccounts(context);
-    if (id && !action && method === "GET") return getAccount(context, id);
-    if (id && !action && method === "DELETE") return deleteAccount(context, id);
-    if (id && action === "reconnect" && method === "POST") return reconnectAccount(context, id);
-    if (id && action === "refresh" && method === "POST") return refreshAccount(context, id);
+    if (!id && method === "GET") {return listAccounts(context);}
+    if (id === "refresh-calendars" && method === "POST") {return refreshAllAccounts(context);}
+    if (id && !action && method === "GET") {return getAccount(context, id);}
+    if (id && !action && method === "DELETE") {return deleteAccount(context, id);}
+    if (id && action === "reconnect" && method === "POST") {return reconnectAccount(context, id);}
+    if (id && action === "refresh" && method === "POST") {return refreshAccount(context, id);}
   }
   if (resource === "sources") {
-    if (!id && method === "GET") return json(await listSources(context.database, SINGLE_USER_ID));
-    if (id === "authorize" && method === "GET") return authorize(context);
-    if (id === "callback" && action === "google" && method === "GET") return googleCallback(context);
-    if (id === "caldav" && action === "discover" && method === "POST") return discoverRoute(context);
-    if (id === "caldav" && !action && method === "POST") return createCalDAVSource(context);
-    if (id && !action && method === "GET") return getSource(context, id);
-    if (id && !action && method === "PATCH") return patchSource(context, id);
-    if (id && !action && method === "DELETE") return deleteSource(context, id);
+    if (!id && method === "GET") {return json(await listSources(context.database, SINGLE_USER_ID));}
+    if (id === "authorize" && method === "GET") {return authorize(context);}
+    if (id === "callback" && action === "google" && method === "GET") {return googleCallback(context);}
+    if (id === "caldav" && action === "discover" && method === "POST") {return discoverRoute(context);}
+    if (id === "caldav" && !action && method === "POST") {return createCalDAVSource(context);}
+    if (id && !action && method === "GET") {return getSource(context, id);}
+    if (id && !action && method === "PATCH") {return patchSource(context, id);}
+    if (id && !action && method === "DELETE") {return deleteSource(context, id);}
     if (id && (action === "destinations" || action === "sources")) {
       if (method === "GET") {
         const ids = await readMappingIds(context.database, action === "destinations" ? "destination" : "source", id);
         return json(action === "destinations" ? { destinationIds: ids } : { sourceIds: ids });
       }
-      if (method === "PUT") return setMappings(context, id, action);
+      if (method === "PUT") {return setMappings(context, id, action);}
     }
   }
-  if (resource === "ics" && method === "POST") return createFeed(context);
-  if (resource === "events" && !id && method === "GET") return events(context);
+  if (resource === "ics" && method === "POST") {return createFeed(context);}
+  if (resource === "events" && !id && method === "GET") {return events(context);}
   if (resource === "events" && id === "count" && method === "GET") {
     return json({ count: await getEventCount(context.database, SINGLE_USER_ID) });
   }
-  if (resource === "entitlements" && method === "GET") return json(ENTITLEMENTS);
-  if (resource === "sync" && id === "status" && method === "GET") return syncStatus(context);
+  if (resource === "entitlements" && method === "GET") {return json(ENTITLEMENTS);}
+  if (resource === "sync" && id === "status" && method === "GET") {return syncStatus(context);}
   if (resource === "sync" && id === "now" && method === "POST") {
     const { planScheduledMessages } = await import("../schedule");
     await sendMessages(context.queue, await planScheduledMessages(context.database));
