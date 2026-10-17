@@ -1,10 +1,19 @@
-import { applyCalendarRediscoveryPlan, getProvider, toDiscoveredCalDAVCalendars, toDiscoveredGoogleCalendars } from "@keeper.sh/calendar";
+import {
+  applyCalendarRediscoveryPlan,
+  createCoordinatedRefresher,
+  createGoogleTokenRefresher,
+  ensureValidToken,
+  getProvider,
+  toDiscoveredCalDAVCalendars,
+  toDiscoveredGoogleCalendars,
+} from "@keeper.sh/calendar";
+import type { TokenState } from "@keeper.sh/calendar";
 import { CalDAVAuthenticationError, createCalDAVClient } from "@keeper.sh/calendar/caldav";
 import { listUserCalendars } from "@keeper.sh/calendar/google";
 import { CalendarFetchError, pullRemoteCalendar } from "@keeper.sh/calendar/ics";
 import { UrlSafetyError, validateUrlSafety } from "@keeper.sh/calendar/safe-fetch";
 import { canExcludeAvailability, normalizeTitleKeywords, syncRangeSchema } from "@keeper.sh/data-schemas";
-import { createSecretCodec, hasCapability, withLeases } from "@keeper.sh/database";
+import { createRefreshLockStore, createSecretCodec, hasCapability, withLeases } from "@keeper.sh/database";
 import type { Database } from "@keeper.sh/database";
 import {
   SINGLE_USER_ID,
@@ -224,6 +233,37 @@ interface RefreshCounts {
   unavailable: number;
 }
 
+interface StoredGoogleCredential {
+  oauthAccessToken: string | null;
+  oauthCredentialId: string | null;
+  oauthExpiresAt: Date | null;
+  oauthRefreshToken: string | null;
+}
+
+// Access tokens last an hour, so refresh through the same coordinated path ingest uses.
+const googleAccessToken = async (context: ApiContext, accountId: string, credential: StoredGoogleCredential): Promise<string> => {
+  const { GOOGLE_CLIENT_ID: clientId, GOOGLE_CLIENT_SECRET: clientSecret } = context.env;
+  const { oauthAccessToken, oauthCredentialId, oauthExpiresAt, oauthRefreshToken } = credential;
+  if (!oauthAccessToken || !oauthCredentialId || !oauthExpiresAt || !oauthRefreshToken || !clientId || !clientSecret) {
+    throw new Error("google credentials incomplete");
+  }
+  const tokenCodec = createSecretCodec(context.encryptionKey);
+  const tokenState: TokenState = {
+    accessToken: tokenCodec.open(oauthAccessToken),
+    accessTokenExpiresAt: oauthExpiresAt,
+    refreshToken: tokenCodec.open(oauthRefreshToken),
+  };
+  await ensureValidToken(tokenState, createCoordinatedRefresher({
+    calendarAccountId: accountId,
+    database: context.database,
+    oauthCredentialId,
+    rawRefresh: createGoogleTokenRefresher({ clientId, clientSecret }),
+    refreshLockStore: createRefreshLockStore(context.database),
+    tokenCodec,
+  }));
+  return tokenState.accessToken;
+};
+
 const refreshOneAccount = async (context: ApiContext, accountId: string, counts: RefreshCounts): Promise<void> => {
   const [account] = await context.database
     .select({
@@ -232,6 +272,9 @@ const refreshOneAccount = async (context: ApiContext, accountId: string, counts:
       caldavServerUrl: caldavCredentialsTable.serverUrl,
       caldavUsername: caldavCredentialsTable.username,
       oauthAccessToken: oauthCredentialsTable.accessToken,
+      oauthCredentialId: oauthCredentialsTable.id,
+      oauthExpiresAt: oauthCredentialsTable.expiresAt,
+      oauthRefreshToken: oauthCredentialsTable.refreshToken,
       provider: calendarAccountsTable.provider,
     })
     .from(calendarAccountsTable)
@@ -251,8 +294,8 @@ const refreshOneAccount = async (context: ApiContext, accountId: string, counts:
       const { calendars } = await discoverCalDAV(account.caldavServerUrl, account.caldavUsername, codec.open(account.caldavPassword));
       discovered = toDiscoveredCalDAVCalendars(calendars);
       caldavServerHost = new URL(account.caldavServerUrl).host.toLowerCase();
-    } else if (account.provider === "google" && account.oauthAccessToken) {
-      discovered = toDiscoveredGoogleCalendars(await listUserCalendars(codec.open(account.oauthAccessToken)));
+    } else if (account.provider === "google") {
+      discovered = toDiscoveredGoogleCalendars(await listUserCalendars(await googleAccessToken(context, accountId, account)));
     } else {
       return;
     }
@@ -267,17 +310,32 @@ const refreshOneAccount = async (context: ApiContext, accountId: string, counts:
     counts.added += plan.inserted.length;
     counts.revived += plan.toRevive.length;
     counts.unavailable += plan.toMarkUnavailable.length;
-  } catch {
+  } catch (error) {
+    const reason = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    console.error(`calendar refresh failed for account ${accountId}: ${reason}`);
     counts.failed += 1;
   }
 };
 
 const emptyCounts = (): RefreshCounts => ({ accounts: 0, added: 0, cooldownSeconds: 0, failed: 0, revived: 0, unavailable: 0 });
 
+// The account page words its result as imported / not found / back, so it gets its own shape.
 const refreshAccount = async (context: ApiContext, id: string): Promise<Response> => {
+  const [exists] = await context.database
+    .select({ id: calendarAccountsTable.id })
+    .from(calendarAccountsTable)
+    .where(eq(calendarAccountsTable.id, id))
+    .limit(1);
+  if (!exists) {
+    return ErrorResponse.notFound().toResponse();
+  }
+  // Feeds have no calendar list to rediscover, so they report nothing changed.
   const counts = emptyCounts();
   await refreshOneAccount(context, id, counts);
-  return json(counts);
+  if (counts.failed > 0) {
+    return ErrorResponse.badRequest("Keeper could not reach this account. Reconnect it and try again.").toResponse();
+  }
+  return json({ imported: counts.added, missing: counts.unavailable, restored: counts.revived });
 };
 
 const refreshAllAccounts = async (context: ApiContext): Promise<Response> => {
