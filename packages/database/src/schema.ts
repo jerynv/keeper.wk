@@ -338,6 +338,16 @@ const locksTable = sqliteTable("locks", {
   key: text().notNull().primaryKey(),
 });
 
+/*
+ * Pending Google OAuth handshakes. A state is consumed by one DELETE ... RETURNING, so it
+ * is single-use by construction: a replayed callback finds nothing to consume.
+ */
+const oauthStatesTable = sqliteTable("oauth_states", {
+  expiresAt: integer().notNull(),
+  key: text().notNull().primaryKey(),
+  value: text().notNull(),
+});
+
 export {
   SINGLE_USER_ID,
   caldavCredentialsTable,
@@ -349,6 +359,7 @@ export {
   eventStatesTable,
   locksTable,
   oauthCredentialsTable,
+  oauthStatesTable,
   sourceDestinationMappingsTable,
   syncStatusTable,
 };

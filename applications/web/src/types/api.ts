@@ -1,0 +1,96 @@
+import type { ExcludableAvailability, SyncRange } from "@keeper.sh/data-schemas";
+
+export interface CalendarAccount {
+  id: string;
+  provider: string;
+  providerName: string;
+  providerIcon: string | null;
+  displayName: string | null;
+  email: string | null;
+  accountLabel: string;
+  accountIdentifier: string | null;
+  authType: string;
+  needsReauthentication: boolean;
+  calendarCount: number;
+  calendarsRefreshedAt: string | null;
+  createdAt: string;
+  /** Present only on the account detail payload, and only for CalDAV accounts. */
+  caldavServerUrl?: string | null;
+  caldavUsername?: string | null;
+}
+
+export interface CalendarSource {
+  id: string;
+  name: string;
+  calendarType: string;
+  capabilities: string[];
+  accountId: string;
+  provider: string;
+  providerName: string;
+  providerIcon: string | null;
+  displayName: string | null;
+  email: string | null;
+  accountLabel: string;
+  accountIdentifier: string | null;
+  needsReauthentication: boolean;
+  includeInIcalFeed: boolean;
+  unavailableSince: string | null;
+  disabled: boolean;
+  providerMissingSince: string | null;
+}
+
+export interface CalendarDetail {
+  id: string;
+  name: string;
+  originalName: string | null;
+  calendarType: string;
+  capabilities: string[];
+  provider: string;
+  providerName: string;
+  providerIcon: string | null;
+  url: string | null;
+  calendarUrl: string | null;
+  customEventName: string;
+  excludeAllDayEvents: boolean;
+  excludeAvailabilities: ExcludableAvailability[];
+  excludeEventDescription: boolean;
+  excludeEventLocation: boolean;
+  excludeEventName: boolean;
+  excludeFocusTime: boolean;
+  excludeOutOfOffice: boolean;
+  excludeTitleKeywords: string[];
+  treatFullDayTimedEventsAsAllDay: boolean;
+  syncFutureRange: SyncRange;
+  syncHistoricRange: SyncRange;
+  disabled: boolean;
+  ingestFailureCount: number;
+  ingestLastFailureAt: string | null;
+  markEventsAsPrivate: boolean;
+  providerMissingSince: string | null;
+  destinationIds: string[];
+  sourceIds: string[];
+  unavailableSince: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiEvent {
+  id: string;
+  eventStateId: string | null;
+  title: string | null;
+  description: string | null;
+  location: string | null;
+  startTime: string;
+  endTime: string;
+  /** Whole-day event: `startTime`/`endTime` are the UTC-midnight day bounds. */
+  isAllDay: boolean;
+  calendarId: string;
+  calendarName: string;
+  calendarProvider: string;
+  calendarUrl: string;
+}
+
+export interface ApiEventSummary {
+  id: string;
+  startTime: string;
+}

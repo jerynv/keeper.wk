@@ -213,6 +213,8 @@ export {
 } from "./core/events/mappings";
 export {
   createGoogleOAuthService,
+  fetchUserInfo as fetchGoogleUserInfo,
+  hasRequiredScopes as hasRequiredGoogleScopes,
   createGoogleTokenRefresher,
   type GoogleOAuthCredentials,
   type GoogleOAuthService,

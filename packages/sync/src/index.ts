@@ -2,6 +2,7 @@ export { syncDestinationsForUser } from "./sync-user";
 export {
   createSyncLock,
   createMappingMutationLockId,
+  LOCK_PREFIX,
   SyncLockRenewalError,
 } from "./sync-lock";
 export type { SyncLockHandle } from "./sync-lock";

@@ -5,6 +5,14 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // The dashboard (applications/web, built with vite). The Worker runs first on every
+  // request, so the Access check guards the app's files as well as its API.
+  "assets": {
+    "directory": "../../applications/web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
+  },
   // Every minute: name the units of work and queue them.
   "triggers": { "crons": ["* * * * *"] },
   "d1_databases": [
@@ -33,7 +41,10 @@
     "PUBLIC_ORIGIN": "https://cal.jeryn.me",
     // Filled in Phase 6 from the Access application: https://<team>.cloudflareaccess.com
     "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": ""
+    "ACCESS_AUD": "",
+    "OWNER_EMAIL": "",
+    "SOURCE_URL": "https://github.com/ridafkih/keeper.sh",
+    "TIMEZONE": "America/Indiana/Indianapolis"
   }
   // Secrets (wrangler secret put): ENCRYPTION_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
 }

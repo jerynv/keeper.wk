@@ -5,7 +5,7 @@ import { sendMessages } from "./messages";
 import type { SyncMessage } from "./messages";
 import { pushDestinationCalendar } from "./push";
 import { planPushesForSource, planScheduledMessages } from "./schedule";
-import { handleRequest } from "./http";
+import { handleRequest } from "./http/router";
 import { widelog, withWideEvent } from "./telemetry";
 
 const resolveConfig = (env: Env) => ({
