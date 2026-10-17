@@ -11,12 +11,21 @@
 import { Route as rootRouteImport } from './../../routes/__root'
 import { Route as IndexRouteImport } from './../../routes/index'
 import { Route as dashboardRouteRouteImport } from './../../routes/(dashboard)/route'
+import { Route as oauthRouteRouteImport } from './../../routes/(oauth)/route'
+import { Route as oauthDashboardRouteRouteImport } from './../../routes/(oauth)/dashboard/route'
 import { Route as dashboardDashboardIndexRouteImport } from './../../routes/(dashboard)/dashboard/index'
 import { Route as dashboardDashboardAccountsRouteRouteImport } from './../../routes/(dashboard)/dashboard/accounts/route'
 import { Route as dashboardDashboardConnectRouteRouteImport } from './../../routes/(dashboard)/dashboard/connect/route'
+import { Route as oauthDashboardConnectRouteRouteImport } from './../../routes/(oauth)/dashboard/connect/route'
 import { Route as dashboardDashboardConnectIndexRouteImport } from './../../routes/(dashboard)/dashboard/connect/index'
 import { Route as dashboardDashboardEventsIndexRouteImport } from './../../routes/(dashboard)/dashboard/events/index'
 import { Route as dashboardDashboardIntegrationsIndexRouteImport } from './../../routes/(dashboard)/dashboard/integrations/index'
+import { Route as oauthDashboardConnectAppleRouteImport } from './../../routes/(oauth)/dashboard/connect/apple'
+import { Route as oauthDashboardConnectCaldavRouteImport } from './../../routes/(oauth)/dashboard/connect/caldav'
+import { Route as oauthDashboardConnectFastmailRouteImport } from './../../routes/(oauth)/dashboard/connect/fastmail'
+import { Route as oauthDashboardConnectGoogleRouteImport } from './../../routes/(oauth)/dashboard/connect/google'
+import { Route as oauthDashboardConnectIcalLinkRouteImport } from './../../routes/(oauth)/dashboard/connect/ical-link'
+import { Route as oauthDashboardConnectIcsFileRouteImport } from './../../routes/(oauth)/dashboard/connect/ics-file'
 import { Route as dashboardDashboardAccountsAccountIdIndexRouteImport } from './../../routes/(dashboard)/dashboard/accounts/$accountId.index'
 import { Route as dashboardDashboardAccountsAccountIdCalendarIdRouteImport } from './../../routes/(dashboard)/dashboard/accounts/$accountId.$calendarId'
 import { Route as dashboardDashboardAccountsAccountIdReconnectRouteImport } from './../../routes/(dashboard)/dashboard/accounts/$accountId.reconnect'
@@ -30,6 +39,15 @@ const IndexRoute = IndexRouteImport.update({
 const dashboardRouteRoute = dashboardRouteRouteImport.update({
   id: '/(dashboard)',
   getParentRoute: () => rootRouteImport,
+} as any)
+const oauthRouteRoute = oauthRouteRouteImport.update({
+  id: '/(oauth)',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const oauthDashboardRouteRoute = oauthDashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => oauthRouteRoute,
 } as any)
 const dashboardDashboardIndexRoute = dashboardDashboardIndexRouteImport.update({
   id: '/dashboard/',
@@ -48,6 +66,12 @@ const dashboardDashboardConnectRouteRoute =
     path: '/dashboard/connect',
     getParentRoute: () => dashboardRouteRoute,
   } as any)
+const oauthDashboardConnectRouteRoute =
+  oauthDashboardConnectRouteRouteImport.update({
+    id: '/connect',
+    path: '/connect',
+    getParentRoute: () => oauthDashboardRouteRoute,
+  } as any)
 const dashboardDashboardConnectIndexRoute =
   dashboardDashboardConnectIndexRouteImport.update({
     id: '/',
@@ -65,6 +89,42 @@ const dashboardDashboardIntegrationsIndexRoute =
     id: '/dashboard/integrations/',
     path: '/dashboard/integrations/',
     getParentRoute: () => dashboardRouteRoute,
+  } as any)
+const oauthDashboardConnectAppleRoute =
+  oauthDashboardConnectAppleRouteImport.update({
+    id: '/apple',
+    path: '/apple',
+    getParentRoute: () => oauthDashboardConnectRouteRoute,
+  } as any)
+const oauthDashboardConnectCaldavRoute =
+  oauthDashboardConnectCaldavRouteImport.update({
+    id: '/caldav',
+    path: '/caldav',
+    getParentRoute: () => oauthDashboardConnectRouteRoute,
+  } as any)
+const oauthDashboardConnectFastmailRoute =
+  oauthDashboardConnectFastmailRouteImport.update({
+    id: '/fastmail',
+    path: '/fastmail',
+    getParentRoute: () => oauthDashboardConnectRouteRoute,
+  } as any)
+const oauthDashboardConnectGoogleRoute =
+  oauthDashboardConnectGoogleRouteImport.update({
+    id: '/google',
+    path: '/google',
+    getParentRoute: () => oauthDashboardConnectRouteRoute,
+  } as any)
+const oauthDashboardConnectIcalLinkRoute =
+  oauthDashboardConnectIcalLinkRouteImport.update({
+    id: '/ical-link',
+    path: '/ical-link',
+    getParentRoute: () => oauthDashboardConnectRouteRoute,
+  } as any)
+const oauthDashboardConnectIcsFileRoute =
+  oauthDashboardConnectIcsFileRouteImport.update({
+    id: '/ics-file',
+    path: '/ics-file',
+    getParentRoute: () => oauthDashboardConnectRouteRoute,
   } as any)
 const dashboardDashboardAccountsAccountIdIndexRoute =
   dashboardDashboardAccountsAccountIdIndexRouteImport.update({
@@ -93,9 +153,16 @@ const dashboardDashboardAccountsAccountIdSetupRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof oauthDashboardRouteRouteWithChildren
   '/dashboard/accounts': typeof dashboardDashboardAccountsRouteRouteWithChildren
-  '/dashboard/connect': typeof dashboardDashboardConnectRouteRouteWithChildren
+  '/dashboard/connect': typeof oauthDashboardConnectRouteRouteWithChildren
   '/dashboard/': typeof dashboardDashboardIndexRoute
+  '/dashboard/connect/apple': typeof oauthDashboardConnectAppleRoute
+  '/dashboard/connect/caldav': typeof oauthDashboardConnectCaldavRoute
+  '/dashboard/connect/fastmail': typeof oauthDashboardConnectFastmailRoute
+  '/dashboard/connect/google': typeof oauthDashboardConnectGoogleRoute
+  '/dashboard/connect/ical-link': typeof oauthDashboardConnectIcalLinkRoute
+  '/dashboard/connect/ics-file': typeof oauthDashboardConnectIcsFileRoute
   '/dashboard/connect/': typeof dashboardDashboardConnectIndexRoute
   '/dashboard/events/': typeof dashboardDashboardEventsIndexRoute
   '/dashboard/integrations/': typeof dashboardDashboardIntegrationsIndexRoute
@@ -106,9 +173,15 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard/accounts': typeof dashboardDashboardAccountsRouteRouteWithChildren
   '/dashboard': typeof dashboardDashboardIndexRoute
+  '/dashboard/accounts': typeof dashboardDashboardAccountsRouteRouteWithChildren
   '/dashboard/connect': typeof dashboardDashboardConnectIndexRoute
+  '/dashboard/connect/apple': typeof oauthDashboardConnectAppleRoute
+  '/dashboard/connect/caldav': typeof oauthDashboardConnectCaldavRoute
+  '/dashboard/connect/fastmail': typeof oauthDashboardConnectFastmailRoute
+  '/dashboard/connect/google': typeof oauthDashboardConnectGoogleRoute
+  '/dashboard/connect/ical-link': typeof oauthDashboardConnectIcalLinkRoute
+  '/dashboard/connect/ics-file': typeof oauthDashboardConnectIcsFileRoute
   '/dashboard/events': typeof dashboardDashboardEventsIndexRoute
   '/dashboard/integrations': typeof dashboardDashboardIntegrationsIndexRoute
   '/dashboard/accounts/$accountId/$calendarId': typeof dashboardDashboardAccountsAccountIdCalendarIdRoute
@@ -120,9 +193,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(dashboard)': typeof dashboardRouteRouteWithChildren
+  '/(oauth)': typeof oauthRouteRouteWithChildren
+  '/(oauth)/dashboard': typeof oauthDashboardRouteRouteWithChildren
   '/(dashboard)/dashboard/accounts': typeof dashboardDashboardAccountsRouteRouteWithChildren
   '/(dashboard)/dashboard/connect': typeof dashboardDashboardConnectRouteRouteWithChildren
+  '/(oauth)/dashboard/connect': typeof oauthDashboardConnectRouteRouteWithChildren
   '/(dashboard)/dashboard/': typeof dashboardDashboardIndexRoute
+  '/(oauth)/dashboard/connect/apple': typeof oauthDashboardConnectAppleRoute
+  '/(oauth)/dashboard/connect/caldav': typeof oauthDashboardConnectCaldavRoute
+  '/(oauth)/dashboard/connect/fastmail': typeof oauthDashboardConnectFastmailRoute
+  '/(oauth)/dashboard/connect/google': typeof oauthDashboardConnectGoogleRoute
+  '/(oauth)/dashboard/connect/ical-link': typeof oauthDashboardConnectIcalLinkRoute
+  '/(oauth)/dashboard/connect/ics-file': typeof oauthDashboardConnectIcsFileRoute
   '/(dashboard)/dashboard/connect/': typeof dashboardDashboardConnectIndexRoute
   '/(dashboard)/dashboard/events/': typeof dashboardDashboardEventsIndexRoute
   '/(dashboard)/dashboard/integrations/': typeof dashboardDashboardIntegrationsIndexRoute
@@ -135,9 +217,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dashboard'
     | '/dashboard/accounts'
     | '/dashboard/connect'
     | '/dashboard/'
+    | '/dashboard/connect/apple'
+    | '/dashboard/connect/caldav'
+    | '/dashboard/connect/fastmail'
+    | '/dashboard/connect/google'
+    | '/dashboard/connect/ical-link'
+    | '/dashboard/connect/ics-file'
     | '/dashboard/connect/'
     | '/dashboard/events/'
     | '/dashboard/integrations/'
@@ -148,9 +237,15 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard/accounts'
     | '/dashboard'
+    | '/dashboard/accounts'
     | '/dashboard/connect'
+    | '/dashboard/connect/apple'
+    | '/dashboard/connect/caldav'
+    | '/dashboard/connect/fastmail'
+    | '/dashboard/connect/google'
+    | '/dashboard/connect/ical-link'
+    | '/dashboard/connect/ics-file'
     | '/dashboard/events'
     | '/dashboard/integrations'
     | '/dashboard/accounts/$accountId/$calendarId'
@@ -161,9 +256,18 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/(dashboard)'
+    | '/(oauth)'
+    | '/(oauth)/dashboard'
     | '/(dashboard)/dashboard/accounts'
     | '/(dashboard)/dashboard/connect'
+    | '/(oauth)/dashboard/connect'
     | '/(dashboard)/dashboard/'
+    | '/(oauth)/dashboard/connect/apple'
+    | '/(oauth)/dashboard/connect/caldav'
+    | '/(oauth)/dashboard/connect/fastmail'
+    | '/(oauth)/dashboard/connect/google'
+    | '/(oauth)/dashboard/connect/ical-link'
+    | '/(oauth)/dashboard/connect/ics-file'
     | '/(dashboard)/dashboard/connect/'
     | '/(dashboard)/dashboard/events/'
     | '/(dashboard)/dashboard/integrations/'
@@ -176,6 +280,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   dashboardRouteRoute: typeof dashboardRouteRouteWithChildren
+  oauthRouteRoute: typeof oauthRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -193,6 +298,20 @@ declare module '@tanstack/react-router' {
       fullPath: ''
       preLoaderRoute: typeof dashboardRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/(oauth)': {
+      id: '/(oauth)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof oauthRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(oauth)/dashboard': {
+      id: '/(oauth)/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof oauthDashboardRouteRouteImport
+      parentRoute: typeof oauthRouteRoute
     }
     '/(dashboard)/dashboard/': {
       id: '/(dashboard)/dashboard/'
@@ -215,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof dashboardDashboardConnectRouteRouteImport
       parentRoute: typeof dashboardRouteRoute
     }
+    '/(oauth)/dashboard/connect': {
+      id: '/(oauth)/dashboard/connect'
+      path: '/connect'
+      fullPath: '/dashboard/connect'
+      preLoaderRoute: typeof oauthDashboardConnectRouteRouteImport
+      parentRoute: typeof oauthDashboardRouteRoute
+    }
     '/(dashboard)/dashboard/connect/': {
       id: '/(dashboard)/dashboard/connect/'
       path: '/'
@@ -235,6 +361,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/integrations/'
       preLoaderRoute: typeof dashboardDashboardIntegrationsIndexRouteImport
       parentRoute: typeof dashboardRouteRoute
+    }
+    '/(oauth)/dashboard/connect/apple': {
+      id: '/(oauth)/dashboard/connect/apple'
+      path: '/apple'
+      fullPath: '/dashboard/connect/apple'
+      preLoaderRoute: typeof oauthDashboardConnectAppleRouteImport
+      parentRoute: typeof oauthDashboardConnectRouteRoute
+    }
+    '/(oauth)/dashboard/connect/caldav': {
+      id: '/(oauth)/dashboard/connect/caldav'
+      path: '/caldav'
+      fullPath: '/dashboard/connect/caldav'
+      preLoaderRoute: typeof oauthDashboardConnectCaldavRouteImport
+      parentRoute: typeof oauthDashboardConnectRouteRoute
+    }
+    '/(oauth)/dashboard/connect/fastmail': {
+      id: '/(oauth)/dashboard/connect/fastmail'
+      path: '/fastmail'
+      fullPath: '/dashboard/connect/fastmail'
+      preLoaderRoute: typeof oauthDashboardConnectFastmailRouteImport
+      parentRoute: typeof oauthDashboardConnectRouteRoute
+    }
+    '/(oauth)/dashboard/connect/google': {
+      id: '/(oauth)/dashboard/connect/google'
+      path: '/google'
+      fullPath: '/dashboard/connect/google'
+      preLoaderRoute: typeof oauthDashboardConnectGoogleRouteImport
+      parentRoute: typeof oauthDashboardConnectRouteRoute
+    }
+    '/(oauth)/dashboard/connect/ical-link': {
+      id: '/(oauth)/dashboard/connect/ical-link'
+      path: '/ical-link'
+      fullPath: '/dashboard/connect/ical-link'
+      preLoaderRoute: typeof oauthDashboardConnectIcalLinkRouteImport
+      parentRoute: typeof oauthDashboardConnectRouteRoute
+    }
+    '/(oauth)/dashboard/connect/ics-file': {
+      id: '/(oauth)/dashboard/connect/ics-file'
+      path: '/ics-file'
+      fullPath: '/dashboard/connect/ics-file'
+      preLoaderRoute: typeof oauthDashboardConnectIcsFileRouteImport
+      parentRoute: typeof oauthDashboardConnectRouteRoute
     }
     '/(dashboard)/dashboard/accounts/$accountId/': {
       id: '/(dashboard)/dashboard/accounts/$accountId/'
@@ -328,9 +496,57 @@ const dashboardRouteRouteWithChildren = dashboardRouteRoute._addFileChildren(
   dashboardRouteRouteChildren,
 )
 
+interface oauthDashboardConnectRouteRouteChildren {
+  oauthDashboardConnectAppleRoute: typeof oauthDashboardConnectAppleRoute
+  oauthDashboardConnectCaldavRoute: typeof oauthDashboardConnectCaldavRoute
+  oauthDashboardConnectFastmailRoute: typeof oauthDashboardConnectFastmailRoute
+  oauthDashboardConnectGoogleRoute: typeof oauthDashboardConnectGoogleRoute
+  oauthDashboardConnectIcalLinkRoute: typeof oauthDashboardConnectIcalLinkRoute
+  oauthDashboardConnectIcsFileRoute: typeof oauthDashboardConnectIcsFileRoute
+}
+
+const oauthDashboardConnectRouteRouteChildren: oauthDashboardConnectRouteRouteChildren =
+  {
+    oauthDashboardConnectAppleRoute: oauthDashboardConnectAppleRoute,
+    oauthDashboardConnectCaldavRoute: oauthDashboardConnectCaldavRoute,
+    oauthDashboardConnectFastmailRoute: oauthDashboardConnectFastmailRoute,
+    oauthDashboardConnectGoogleRoute: oauthDashboardConnectGoogleRoute,
+    oauthDashboardConnectIcalLinkRoute: oauthDashboardConnectIcalLinkRoute,
+    oauthDashboardConnectIcsFileRoute: oauthDashboardConnectIcsFileRoute,
+  }
+
+const oauthDashboardConnectRouteRouteWithChildren =
+  oauthDashboardConnectRouteRoute._addFileChildren(
+    oauthDashboardConnectRouteRouteChildren,
+  )
+
+interface oauthDashboardRouteRouteChildren {
+  oauthDashboardConnectRouteRoute: typeof oauthDashboardConnectRouteRouteWithChildren
+}
+
+const oauthDashboardRouteRouteChildren: oauthDashboardRouteRouteChildren = {
+  oauthDashboardConnectRouteRoute: oauthDashboardConnectRouteRouteWithChildren,
+}
+
+const oauthDashboardRouteRouteWithChildren =
+  oauthDashboardRouteRoute._addFileChildren(oauthDashboardRouteRouteChildren)
+
+interface oauthRouteRouteChildren {
+  oauthDashboardRouteRoute: typeof oauthDashboardRouteRouteWithChildren
+}
+
+const oauthRouteRouteChildren: oauthRouteRouteChildren = {
+  oauthDashboardRouteRoute: oauthDashboardRouteRouteWithChildren,
+}
+
+const oauthRouteRouteWithChildren = oauthRouteRoute._addFileChildren(
+  oauthRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   dashboardRouteRoute: dashboardRouteRouteWithChildren,
+  oauthRouteRoute: oauthRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
