@@ -103,7 +103,15 @@ const createDigestAwareFetch = (options: DigestAwareFetchOptions): DigestAwareFe
   };
 
   const performFetch: FetchFunction = (input, init) =>
-    recordRequest(() => authenticatedFetch(input, init));
+    recordRequest(async () => {
+      const response = await authenticatedFetch(input, init);
+      if (response.status === HTTP_UNAUTHORIZED) {
+        // Only what the server said back, never the request's own headers.
+        const url = new URL(input instanceof Request ? input.url : input.toString());
+        console.warn(`caldav 401: ${init?.method ?? "GET"} ${url.host} via ${state.method}; ${JSON.stringify(Object.fromEntries(response.headers))}`);
+      }
+      return response;
+    });
 
   const getResolvedMethod = (): CalDAVAuthMethod | null => {
     if (state.method === "unknown") {
