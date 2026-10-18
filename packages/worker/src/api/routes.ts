@@ -1,4 +1,5 @@
 import {
+  RESET_CALENDAR_BACKOFF_STATE,
   applyCalendarRediscoveryPlan,
   createCoordinatedRefresher,
   createGoogleTokenRefresher,
@@ -221,6 +222,17 @@ const reconnectAccount = async (context: ApiContext, id: string): Promise<Respon
   await context.database.update(calendarAccountsTable)
     .set({ needsReauthentication: false, reauthenticationSource: null })
     .where(eq(calendarAccountsTable.id, id));
+  // A new password is a fresh start, so neither direction waits out the old failures.
+  await context.database.update(calendarsTable)
+    .set({
+      failureCount: RESET_CALENDAR_BACKOFF_STATE.failureCount,
+      ingestFailureCount: RESET_CALENDAR_BACKOFF_STATE.failureCount,
+      ingestLastFailureAt: RESET_CALENDAR_BACKOFF_STATE.lastFailureAt,
+      ingestNextAttemptAt: RESET_CALENDAR_BACKOFF_STATE.nextAttemptAt,
+      lastFailureAt: RESET_CALENDAR_BACKOFF_STATE.lastFailureAt,
+      nextAttemptAt: RESET_CALENDAR_BACKOFF_STATE.nextAttemptAt,
+    })
+    .where(eq(calendarsTable.accountId, id));
   await invalidateCalendarDiscoveryCache(createCacheStore(context.database), id);
   return json({ success: true });
 };

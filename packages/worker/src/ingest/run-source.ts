@@ -289,8 +289,9 @@ const recordIngestFailure = async (
       .update(calendarAccountsTable)
       .set({ needsReauthentication: true, reauthenticationSource: REAUTHENTICATION_SOURCE_INGEST })
       .where(eq(calendarAccountsTable.id, source.accountId));
-    return;
   }
+  // Refused credentials back off too: iCloud treats a failed login every minute as abuse
+  // and keeps refusing, and reconnecting clears this clock anyway.
   const backoff = buildCalendarBackoffState(source.failureCount);
   await database
     .update(calendarsTable)
