@@ -9,10 +9,10 @@ import {
 } from "@keeper.sh/calendar";
 import { createGoogleSyncProvider } from "@keeper.sh/calendar/google";
 import { createOutlookSyncProvider } from "@keeper.sh/calendar/outlook";
-import { createCalDAVSyncProvider } from "@keeper.sh/calendar/caldav";
+import { createCalDAVSyncProvider, createCalendarDiscoveryCache } from "@keeper.sh/calendar/caldav";
 import { resolveAuthMethod } from "@keeper.sh/calendar/digest-fetch";
 import { PROVIDER_PUSH_REQUEST_TIMEOUT_MS } from "@keeper.sh/constants";
-import { createSecretCodec, decryptPassword } from "@keeper.sh/database";
+import { createCacheStore, createSecretCodec, decryptPassword } from "@keeper.sh/database";
 import {
   calendarAccountsTable,
   calendarsTable,
@@ -131,6 +131,7 @@ const resolveCalDAVProvider = async (
 ): Promise<CalendarSyncProvider | null> => {
   const [caldavCred] = await database
     .select({
+      accountId: calendarAccountsTable.id,
       authMethod: caldavCredentialsTable.authMethod,
       username: caldavCredentialsTable.username,
       encryptedPassword: caldavCredentialsTable.encryptedPassword,
@@ -151,6 +152,8 @@ const resolveCalDAVProvider = async (
 
   return createCalDAVSyncProvider({
     authMethod: resolveAuthMethod(caldavCred.authMethod),
+    // Shared with ingest, so one account's calendars walk the server once per fifteen minutes.
+    calendarDiscoveryCache: createCalendarDiscoveryCache(createCacheStore(database), caldavCred.accountId),
     calendarUrl: caldavCred.calendarUrl ?? caldavCred.serverUrl,
     serverUrl: caldavCred.serverUrl,
     username: caldavCred.username,

@@ -28,4 +28,5 @@ export {
   withLeases,
 } from "./leases";
 export type { LeaseHandle, WaitForLeasesOptions } from "./leases";
+export { createCacheStore } from "./cache-store";
 export { createRefreshLockStore } from "./refresh-lock-store";

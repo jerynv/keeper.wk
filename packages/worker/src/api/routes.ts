@@ -8,12 +8,12 @@ import {
   toDiscoveredGoogleCalendars,
 } from "@keeper.sh/calendar";
 import type { TokenState } from "@keeper.sh/calendar";
-import { CalDAVAuthenticationError, createCalDAVClient } from "@keeper.sh/calendar/caldav";
+import { CalDAVAuthenticationError, createCalDAVClient, invalidateCalendarDiscoveryCache } from "@keeper.sh/calendar/caldav";
 import { listUserCalendars } from "@keeper.sh/calendar/google";
 import { CalendarFetchError, pullRemoteCalendar } from "@keeper.sh/calendar/ics";
 import { UrlSafetyError, validateUrlSafety } from "@keeper.sh/calendar/safe-fetch";
 import { canExcludeAvailability, normalizeTitleKeywords, syncRangeSchema } from "@keeper.sh/data-schemas";
-import { createRefreshLockStore, createSecretCodec, hasCapability, withLeases } from "@keeper.sh/database";
+import { createCacheStore, createRefreshLockStore, createSecretCodec, hasCapability, withLeases } from "@keeper.sh/database";
 import type { Database } from "@keeper.sh/database";
 import {
   SINGLE_USER_ID,
@@ -221,6 +221,7 @@ const reconnectAccount = async (context: ApiContext, id: string): Promise<Respon
   await context.database.update(calendarAccountsTable)
     .set({ needsReauthentication: false, reauthenticationSource: null })
     .where(eq(calendarAccountsTable.id, id));
+  await invalidateCalendarDiscoveryCache(createCacheStore(context.database), id);
   return json({ success: true });
 };
 
@@ -292,6 +293,8 @@ const refreshOneAccount = async (context: ApiContext, accountId: string, counts:
     let caldavServerHost: string | null = null;
     if (account.authType === "caldav" && account.caldavServerUrl && account.caldavUsername && account.caldavPassword) {
       const { calendars } = await discoverCalDAV(account.caldavServerUrl, account.caldavUsername, codec.open(account.caldavPassword));
+      // The next sync reads the list this walk just stored rather than one cached before it.
+      await invalidateCalendarDiscoveryCache(createCacheStore(context.database), accountId);
       discovered = toDiscoveredCalDAVCalendars(calendars);
       caldavServerHost = new URL(account.caldavServerUrl).host.toLowerCase();
     } else if (account.provider === "google") {

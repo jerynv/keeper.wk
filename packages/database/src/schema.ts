@@ -348,8 +348,19 @@ const oauthStatesTable = sqliteTable("oauth_states", {
   value: text().notNull(),
 });
 
+/*
+ * Short-lived values that only save work, such as a CalDAV account's calendar list. Losing
+ * one costs a refetch, so reads treat a missing or expired row the same.
+ */
+const cacheEntriesTable = sqliteTable("cache_entries", {
+  expiresAt: integer().notNull(),
+  key: text().notNull().primaryKey(),
+  value: text().notNull(),
+});
+
 export {
   SINGLE_USER_ID,
+  cacheEntriesTable,
   caldavCredentialsTable,
   calendarAccountsTable,
   calendarRemovalsTable,

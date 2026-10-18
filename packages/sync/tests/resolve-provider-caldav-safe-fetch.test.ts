@@ -9,9 +9,11 @@ vi.mock("@keeper.sh/calendar/caldav", () => ({
     capturedConfigs.push(config);
     return { name: "caldav" };
   },
+  createCalendarDiscoveryCache: () => ({ read: () => Promise.resolve(null), write: () => Promise.resolve() }),
 }));
 
 vi.mock("@keeper.sh/database", () => ({
+  createCacheStore: () => ({}),
   decryptPassword: () => "password",
 }));
 

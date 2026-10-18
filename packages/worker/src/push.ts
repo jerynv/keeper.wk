@@ -22,6 +22,7 @@ const ERROR_SUMMARY_LIMIT = 500;
  * settings page can show when a calendar last synced and why it last failed.
  */
 const pushDestinationCalendar = async (config: PushConfig, calendarId: string): Promise<void> => {
+  let skipped = false;
   const result = await syncDestinationsForUser(SINGLE_USER_ID, {
     database: config.database,
     deadlineMs: Date.now() + PUSH_DEADLINE_MS,
@@ -35,6 +36,7 @@ const pushDestinationCalendar = async (config: PushConfig, calendarId: string): 
   }, {
     onCalendarSkipped: (skip) => {
       widelog.set("sync.skip_reason", skip.reason);
+      skipped = true;
     },
   });
 
@@ -42,6 +44,11 @@ const pushDestinationCalendar = async (config: PushConfig, calendarId: string): 
   widelog.set("sync.events_removed", result.removed);
   widelog.set("sync.add_failed", result.addFailed);
   widelog.set("sync.remove_failed", result.removeFailed);
+
+  // A skipped run, such as one held back after failures, says nothing new about the calendar.
+  if (skipped) {
+    return;
+  }
 
   const lastError = result.errors.join("; ").slice(0, ERROR_SUMMARY_LIMIT) || null;
   const now = new Date();

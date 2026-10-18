@@ -10,7 +10,7 @@ import {
   isTimeoutError,
 } from "@keeper.sh/calendar";
 import type { IngestionFetchEventsResult, RequiredSourceRanges, TokenState } from "@keeper.sh/calendar";
-import { createCalDAVSourceFetcher, isCalDAVAuthenticationError } from "@keeper.sh/calendar/caldav";
+import { createCalDAVSourceFetcher, createCalendarDiscoveryCache, isCalDAVAuthenticationError } from "@keeper.sh/calendar/caldav";
 import { resolveAuthMethod } from "@keeper.sh/calendar/digest-fetch";
 import { createGoogleSourceFetcher } from "@keeper.sh/calendar/google";
 import { createIcsSourceFetcher, interpretFullDayTimedEventsAsAllDay } from "@keeper.sh/calendar/ics";
@@ -21,6 +21,7 @@ import {
 } from "@keeper.sh/constants";
 import {
   acquireLease,
+  createCacheStore,
   createRefreshLockStore,
   createSecretCodec,
   hasCapability,
@@ -191,6 +192,7 @@ const resolveCalDAVFetcher = ({ config, ranges, signal, source }: FetcherContext
   }
   const fetcher = createCalDAVSourceFetcher({
     authMethod: resolveAuthMethod(source.caldavAuthMethod ?? "basic"),
+    calendarDiscoveryCache: createCalendarDiscoveryCache(createCacheStore(config.database), source.accountId),
     calendarUrl: source.calendarUrl ?? source.caldavServerUrl,
     password: createSecretCodec(config.encryptionKey).open(source.caldavEncryptedPassword),
     plan: createSourceIngestionPlan(ranges.historicRange, ranges.futureRange),

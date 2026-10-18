@@ -1,0 +1,1490 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "1cbf9831-0ad4-4ee3-b32b-09c02dd9763c",
+  "prevId": "83e4885f-fd45-45ed-a4ad-d1bd0ec491d5",
+  "tables": {
+    "cache_entries": {
+      "name": "cache_entries",
+      "columns": {
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "caldav_credentials": {
+      "name": "caldav_credentials",
+      "columns": {
+        "authMethod": {
+          "name": "authMethod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'basic'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "encryptedPassword": {
+          "name": "encryptedPassword",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "serverUrl": {
+          "name": "serverUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "calendar_accounts": {
+      "name": "calendar_accounts",
+      "columns": {
+        "accountId": {
+          "name": "accountId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "authType": {
+          "name": "authType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "caldavCredentialId": {
+          "name": "caldavCredentialId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "calendarsRefreshAttemptedAt": {
+          "name": "calendarsRefreshAttemptedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "calendarsRefreshedAt": {
+          "name": "calendarsRefreshedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "displayName": {
+          "name": "displayName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "needsReauthentication": {
+          "name": "needsReauthentication",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "oauthCredentialId": {
+          "name": "oauthCredentialId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reauthenticationSource": {
+          "name": "reauthenticationSource",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'owner'"
+        }
+      },
+      "indexes": {
+        "calendar_accounts_user_idx": {
+          "name": "calendar_accounts_user_idx",
+          "columns": [
+            "userId"
+          ],
+          "isUnique": false
+        },
+        "calendar_accounts_provider_idx": {
+          "name": "calendar_accounts_provider_idx",
+          "columns": [
+            "provider"
+          ],
+          "isUnique": false
+        },
+        "calendar_accounts_provider_account_idx": {
+          "name": "calendar_accounts_provider_account_idx",
+          "columns": [
+            "userId",
+            "provider",
+            "accountId"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "calendar_accounts_caldavCredentialId_caldav_credentials_id_fk": {
+          "name": "calendar_accounts_caldavCredentialId_caldav_credentials_id_fk",
+          "tableFrom": "calendar_accounts",
+          "tableTo": "caldav_credentials",
+          "columnsFrom": [
+            "caldavCredentialId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "calendar_accounts_oauthCredentialId_oauth_credentials_id_fk": {
+          "name": "calendar_accounts_oauthCredentialId_oauth_credentials_id_fk",
+          "tableFrom": "calendar_accounts",
+          "tableTo": "oauth_credentials",
+          "columnsFrom": [
+            "oauthCredentialId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "calendar_removals": {
+      "name": "calendar_removals",
+      "columns": {
+        "accountId": {
+          "name": "accountId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "calendarType": {
+          "name": "calendarType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "calendarUrl": {
+          "name": "calendarUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "externalCalendarId": {
+          "name": "externalCalendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'owner'"
+        }
+      },
+      "indexes": {
+        "calendar_removals_account_idx": {
+          "name": "calendar_removals_account_idx",
+          "columns": [
+            "accountId"
+          ],
+          "isUnique": false
+        },
+        "calendar_removals_external_idx": {
+          "name": "calendar_removals_external_idx",
+          "columns": [
+            "accountId",
+            "externalCalendarId"
+          ],
+          "isUnique": true,
+          "where": "\"calendar_removals\".\"externalCalendarId\" is not null"
+        },
+        "calendar_removals_url_idx": {
+          "name": "calendar_removals_url_idx",
+          "columns": [
+            "accountId",
+            "calendarUrl"
+          ],
+          "isUnique": true,
+          "where": "\"calendar_removals\".\"calendarUrl\" is not null"
+        }
+      },
+      "foreignKeys": {
+        "calendar_removals_accountId_calendar_accounts_id_fk": {
+          "name": "calendar_removals_accountId_calendar_accounts_id_fk",
+          "tableFrom": "calendar_removals",
+          "tableTo": "calendar_accounts",
+          "columnsFrom": [
+            "accountId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "calendar_snapshots": {
+      "name": "calendar_snapshots",
+      "columns": {
+        "calendarId": {
+          "name": "calendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "contentHash": {
+          "name": "contentHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "calendar_snapshots_calendarId_unique": {
+          "name": "calendar_snapshots_calendarId_unique",
+          "columns": [
+            "calendarId"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "calendar_snapshots_calendarId_calendars_id_fk": {
+          "name": "calendar_snapshots_calendarId_calendars_id_fk",
+          "tableFrom": "calendar_snapshots",
+          "tableTo": "calendars",
+          "columnsFrom": [
+            "calendarId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "calendars": {
+      "name": "calendars",
+      "columns": {
+        "accountId": {
+          "name": "accountId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "calendarType": {
+          "name": "calendarType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "calendarUrl": {
+          "name": "calendarUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "excludeAllDayEvents": {
+          "name": "excludeAllDayEvents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "excludeAvailabilities": {
+          "name": "excludeAvailabilities",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "excludeEventDescription": {
+          "name": "excludeEventDescription",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "excludeEventLocation": {
+          "name": "excludeEventLocation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "excludeEventName": {
+          "name": "excludeEventName",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "excludeFocusTime": {
+          "name": "excludeFocusTime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "excludeOutOfOffice": {
+          "name": "excludeOutOfOffice",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "excludeTitleKeywords": {
+          "name": "excludeTitleKeywords",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "treatFullDayTimedEventsAsAllDay": {
+          "name": "treatFullDayTimedEventsAsAllDay",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "customEventName": {
+          "name": "customEventName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{{calendar_name}}'"
+        },
+        "markEventsAsPrivate": {
+          "name": "markEventsAsPrivate",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "disabled": {
+          "name": "disabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "failureCount": {
+          "name": "failureCount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "lastFailureAt": {
+          "name": "lastFailureAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "nextAttemptAt": {
+          "name": "nextAttemptAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ingestFailureCount": {
+          "name": "ingestFailureCount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "ingestLastFailureAt": {
+          "name": "ingestLastFailureAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ingestNextAttemptAt": {
+          "name": "ingestNextAttemptAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ingestFutureRange": {
+          "name": "ingestFutureRange",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'2_years'"
+        },
+        "ingestHistoricRange": {
+          "name": "ingestHistoricRange",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'1_month'"
+        },
+        "ingestSeq": {
+          "name": "ingestSeq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "ingestWindowEnd": {
+          "name": "ingestWindowEnd",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ingestWindowRecordedAt": {
+          "name": "ingestWindowRecordedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ingestWindowStart": {
+          "name": "ingestWindowStart",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "providerMissingSince": {
+          "name": "providerMissingSince",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "externalCalendarId": {
+          "name": "externalCalendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "capabilities": {
+          "name": "capabilities",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[\"pull\"]'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "originalName": {
+          "name": "originalName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "syncToken": {
+          "name": "syncToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "syncFutureRange": {
+          "name": "syncFutureRange",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'2_years'"
+        },
+        "syncHistoricRange": {
+          "name": "syncHistoricRange",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'1_month'"
+        },
+        "unavailableSince": {
+          "name": "unavailableSince",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'owner'"
+        }
+      },
+      "indexes": {
+        "calendars_user_idx": {
+          "name": "calendars_user_idx",
+          "columns": [
+            "userId"
+          ],
+          "isUnique": false
+        },
+        "calendars_account_idx": {
+          "name": "calendars_account_idx",
+          "columns": [
+            "accountId"
+          ],
+          "isUnique": false
+        },
+        "calendars_type_idx": {
+          "name": "calendars_type_idx",
+          "columns": [
+            "calendarType"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "calendars_accountId_calendar_accounts_id_fk": {
+          "name": "calendars_accountId_calendar_accounts_id_fk",
+          "tableFrom": "calendars",
+          "tableTo": "calendar_accounts",
+          "columnsFrom": [
+            "accountId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "calendars_sync_ranges_check": {
+          "name": "calendars_sync_ranges_check",
+          "value": "\"syncHistoricRange\" IN ('1_week', '1_month', '3_months', '6_months', '12_months', '2_years') AND \"syncFutureRange\" IN ('1_week', '1_month', '3_months', '6_months', '12_months', '2_years')"
+        },
+        "calendars_ingest_coverage_check": {
+          "name": "calendars_ingest_coverage_check",
+          "value": "\"ingestHistoricRange\" IN ('1_week', '1_month', '3_months', '6_months', '12_months', '2_years') AND \"ingestFutureRange\" IN ('1_week', '1_month', '3_months', '6_months', '12_months', '2_years') AND ((\"ingestWindowStart\" IS NULL AND \"ingestWindowEnd\" IS NULL AND \"ingestWindowRecordedAt\" IS NULL) OR (\"ingestWindowStart\" IS NOT NULL AND \"ingestWindowEnd\" IS NOT NULL AND \"ingestWindowRecordedAt\" IS NOT NULL AND \"ingestWindowStart\" < \"ingestWindowEnd\"))"
+        }
+      }
+    },
+    "event_mappings": {
+      "name": "event_mappings",
+      "columns": {
+        "calendarId": {
+          "name": "calendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleteIdentifier": {
+          "name": "deleteIdentifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "destinationEventUid": {
+          "name": "destinationEventUid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "endTime": {
+          "name": "endTime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "eventStateId": {
+          "name": "eventStateId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "syncEventId": {
+          "name": "syncEventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "syncEventHash": {
+          "name": "syncEventHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceCalendarId": {
+          "name": "sourceCalendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "startTime": {
+          "name": "startTime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "event_mappings_sync_event_cal_idx": {
+          "name": "event_mappings_sync_event_cal_idx",
+          "columns": [
+            "calendarId",
+            "syncEventId"
+          ],
+          "isUnique": true,
+          "where": "\"event_mappings\".\"syncEventId\" is not null"
+        },
+        "event_mappings_calendar_idx": {
+          "name": "event_mappings_calendar_idx",
+          "columns": [
+            "calendarId"
+          ],
+          "isUnique": false
+        },
+        "event_mappings_event_state_idx": {
+          "name": "event_mappings_event_state_idx",
+          "columns": [
+            "eventStateId"
+          ],
+          "isUnique": false
+        },
+        "event_mappings_source_calendar_idx": {
+          "name": "event_mappings_source_calendar_idx",
+          "columns": [
+            "sourceCalendarId"
+          ],
+          "isUnique": false
+        },
+        "event_mappings_missing_sync_event_idx": {
+          "name": "event_mappings_missing_sync_event_idx",
+          "columns": [
+            "id"
+          ],
+          "isUnique": false,
+          "where": "\"event_mappings\".\"syncEventId\" is null"
+        },
+        "event_mappings_sync_hash_idx": {
+          "name": "event_mappings_sync_hash_idx",
+          "columns": [
+            "syncEventHash"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "event_mappings_calendarId_calendars_id_fk": {
+          "name": "event_mappings_calendarId_calendars_id_fk",
+          "tableFrom": "event_mappings",
+          "tableTo": "calendars",
+          "columnsFrom": [
+            "calendarId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "event_mappings_eventStateId_event_states_id_fk": {
+          "name": "event_mappings_eventStateId_event_states_id_fk",
+          "tableFrom": "event_mappings",
+          "tableTo": "event_states",
+          "columnsFrom": [
+            "eventStateId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "event_mappings_identity_check": {
+          "name": "event_mappings_identity_check",
+          "value": "\"event_mappings\".\"eventStateId\" is not null or \"event_mappings\".\"syncEventId\" is not null"
+        }
+      }
+    },
+    "event_states": {
+      "name": "event_states",
+      "columns": {
+        "availability": {
+          "name": "availability",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "calendarId": {
+          "name": "calendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "endTime": {
+          "name": "endTime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "recurrenceRule": {
+          "name": "recurrenceRule",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "exceptionDates": {
+          "name": "exceptionDates",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "recurrenceId": {
+          "name": "recurrenceId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "isAllDay": {
+          "name": "isAllDay",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceEventId": {
+          "name": "sourceEventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceEventType": {
+          "name": "sourceEventType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceEventUid": {
+          "name": "sourceEventUid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "startTime": {
+          "name": "startTime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "startTimeZone": {
+          "name": "startTimeZone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "event_states_start_time_idx": {
+          "name": "event_states_start_time_idx",
+          "columns": [
+            "startTime"
+          ],
+          "isUnique": false
+        },
+        "event_states_end_time_idx": {
+          "name": "event_states_end_time_idx",
+          "columns": [
+            "endTime"
+          ],
+          "isUnique": false
+        },
+        "event_states_calendar_idx": {
+          "name": "event_states_calendar_idx",
+          "columns": [
+            "calendarId"
+          ],
+          "isUnique": false
+        },
+        "event_states_source_event_idx": {
+          "name": "event_states_source_event_idx",
+          "columns": [
+            "calendarId",
+            "sourceEventId"
+          ],
+          "isUnique": true,
+          "where": "\"event_states\".\"sourceEventId\" is not null"
+        },
+        "event_states_recurring_instance_idx": {
+          "name": "event_states_recurring_instance_idx",
+          "columns": [
+            "calendarId",
+            "sourceEventUid",
+            "recurrenceId"
+          ],
+          "isUnique": true,
+          "where": "\"event_states\".\"sourceEventId\" is null and \"event_states\".\"recurrenceId\" is not null"
+        },
+        "event_states_non_recurring_instance_idx": {
+          "name": "event_states_non_recurring_instance_idx",
+          "columns": [
+            "calendarId",
+            "sourceEventUid",
+            "startTime",
+            "endTime"
+          ],
+          "isUnique": true,
+          "where": "\"event_states\".\"sourceEventId\" is null and \"event_states\".\"recurrenceId\" is null"
+        }
+      },
+      "foreignKeys": {
+        "event_states_calendarId_calendars_id_fk": {
+          "name": "event_states_calendarId_calendars_id_fk",
+          "tableFrom": "event_states",
+          "tableTo": "calendars",
+          "columnsFrom": [
+            "calendarId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "locks": {
+      "name": "locks",
+      "columns": {
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "holder": {
+          "name": "holder",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "oauth_credentials": {
+      "name": "oauth_credentials",
+      "columns": {
+        "accessToken": {
+          "name": "accessToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "needsReauthentication": {
+          "name": "needsReauthentication",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "refreshToken": {
+          "name": "refreshToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'owner'"
+        }
+      },
+      "indexes": {
+        "oauth_credentials_user_idx": {
+          "name": "oauth_credentials_user_idx",
+          "columns": [
+            "userId"
+          ],
+          "isUnique": false
+        },
+        "oauth_credentials_provider_idx": {
+          "name": "oauth_credentials_provider_idx",
+          "columns": [
+            "provider"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "oauth_states": {
+      "name": "oauth_states",
+      "columns": {
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "source_destination_mappings": {
+      "name": "source_destination_mappings",
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "destinationCalendarId": {
+          "name": "destinationCalendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sourceCalendarId": {
+          "name": "sourceCalendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "source_destination_mapping_idx": {
+          "name": "source_destination_mapping_idx",
+          "columns": [
+            "sourceCalendarId",
+            "destinationCalendarId"
+          ],
+          "isUnique": true
+        },
+        "source_destination_mappings_source_idx": {
+          "name": "source_destination_mappings_source_idx",
+          "columns": [
+            "sourceCalendarId"
+          ],
+          "isUnique": false
+        },
+        "source_destination_mappings_destination_idx": {
+          "name": "source_destination_mappings_destination_idx",
+          "columns": [
+            "destinationCalendarId"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "source_destination_mappings_destinationCalendarId_calendars_id_fk": {
+          "name": "source_destination_mappings_destinationCalendarId_calendars_id_fk",
+          "tableFrom": "source_destination_mappings",
+          "tableTo": "calendars",
+          "columnsFrom": [
+            "destinationCalendarId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "source_destination_mappings_sourceCalendarId_calendars_id_fk": {
+          "name": "source_destination_mappings_sourceCalendarId_calendars_id_fk",
+          "tableFrom": "source_destination_mappings",
+          "tableTo": "calendars",
+          "columnsFrom": [
+            "sourceCalendarId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "sync_status": {
+      "name": "sync_status",
+      "columns": {
+        "calendarId": {
+          "name": "calendarId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lastError": {
+          "name": "lastError",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "lastSyncedAt": {
+          "name": "lastSyncedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "localEventCount": {
+          "name": "localEventCount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "remoteEventCount": {
+          "name": "remoteEventCount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "sync_status_calendar_idx": {
+          "name": "sync_status_calendar_idx",
+          "columns": [
+            "calendarId"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "sync_status_calendarId_calendars_id_fk": {
+          "name": "sync_status_calendarId_calendars_id_fk",
+          "tableFrom": "sync_status",
+          "tableTo": "calendars",
+          "columnsFrom": [
+            "calendarId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
