@@ -31,6 +31,7 @@ npx wrangler queues create keeper-sync
 npx wrangler d1 migrations apply keeper-cf --remote
 
 openssl rand -base64 32 | npx wrangler secret put ENCRYPTION_KEY
+npx wrangler secret put OWNER_EMAIL           # the one email allowed in
 npx wrangler secret put GOOGLE_CLIENT_ID      # optional, for Google
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 
@@ -43,7 +44,6 @@ Then in `wrangler.jsonc` set your route and these vars, and deploy again:
 - `PUBLIC_ORIGIN`: your hostname, for example `https://cal.example.com`
 - `ACCESS_TEAM_DOMAIN`: `https://<team>.cloudflareaccess.com`
 - `ACCESS_AUD`: the Application Audience tag of the Access app below
-- `OWNER_EMAIL`: the one email allowed in
 - `SOURCE_URL`: where your copy of the source lives (AGPL-3.0 section 13)
 - `TIMEZONE`: optional
 

@@ -4,6 +4,7 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [{ "pattern": "cal.jeryn.me", "custom_domain": true }],
   "observability": { "enabled": true },
   // The dashboard (applications/web, built with vite). The Worker runs first on every
   // request, so the Access check guards the app's files as well as its API.
@@ -19,8 +20,7 @@
     {
       "binding": "DB",
       "database_name": "keeper-cf",
-      // Placeholder until the database is created in Phase 6; `wrangler dev` ignores it.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "b995e41d-32c1-430f-a3ca-57bd3671871b",
       "migrations_dir": "../database/migrations"
     }
   ],
@@ -39,12 +39,11 @@
   },
   "vars": {
     "PUBLIC_ORIGIN": "https://cal.jeryn.me",
-    // Filled in Phase 6 from the Access application: https://<team>.cloudflareaccess.com
-    "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": "",
-    "OWNER_EMAIL": "",
-    "SOURCE_URL": "https://github.com/ridafkih/keeper.sh",
+    // From the Access application in front of this hostname.
+    "ACCESS_TEAM_DOMAIN": "https://spring-hat-2036.cloudflareaccess.com",
+    "ACCESS_AUD": "6add0cd60e8ac75d67e15c030ba9e54e36d2a1e01fd4d3f4ba11bb620d7c2cbf",
+    "SOURCE_URL": "https://github.com/jerynv/keeper.wk",
     "TIMEZONE": "America/Indiana/Indianapolis"
   }
-  // Secrets (wrangler secret put): ENCRYPTION_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
+  // Secrets (wrangler secret put): ENCRYPTION_KEY, OWNER_EMAIL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
 }
