@@ -7,4 +7,4 @@ if [ "${RUN_MIGRATIONS:-true}" != "false" ]; then
   bun /app/packages/database/scripts/migrate.ts
 fi
 
-exec bun services/api/dist/index.js 2>&1 | keeper-otelemetry
+exec keeper-otelemetry bun services/api/dist/index.js
