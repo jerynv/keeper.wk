@@ -64,7 +64,7 @@ describe("reconnecting a CalDAV account", () => {
     const [credential] = await database.insert(caldavCredentialsTable).values({
       encryptedPassword: createSecretCodec(env.ENCRYPTION_KEY).seal("old"),
       serverUrl: "https://caldav.icloud.com",
-      username: "jeryn@icloud.com",
+      username: "user@example.com",
     }).returning({ id: caldavCredentialsTable.id });
     const [account] = await database.insert(calendarAccountsTable).values({
       authType: "caldav",

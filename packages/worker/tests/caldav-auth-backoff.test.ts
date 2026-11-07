@@ -18,7 +18,7 @@ const seedCalDAVSource = async () => {
   const [credential] = await database.insert(caldavCredentialsTable).values({
     encryptedPassword: createSecretCodec(env.ENCRYPTION_KEY).seal("revoked-app-password"),
     serverUrl: SERVER,
-    username: "jeryn@icloud.com",
+    username: "user@example.com",
   }).returning({ id: caldavCredentialsTable.id });
   const [account] = await database.insert(calendarAccountsTable).values({
     authType: "caldav",
