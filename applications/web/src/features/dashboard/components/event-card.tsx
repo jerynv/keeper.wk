@@ -4,10 +4,12 @@ import { tv } from "tailwind-variants/lite";
 import { cn } from "@/utils/cn";
 import { Text } from "@/components/ui/primitives/text";
 import { formatTime, formatTimeRange, formatTimeUntil } from "@/lib/time";
+import { findPrimaryEventLink } from "@/lib/event-links";
 import type { CalendarEvent } from "@/hooks/use-events";
 import { EVENT_COLORS } from "./event-card.styles";
 import type { EventColor } from "./event-card.styles";
 import { EVENT_PILL_HEIGHT_PX } from "./event-layout";
+import { EventLinkButton } from "./event-links";
 
 type EventCardLayout = "list" | "grid";
 
@@ -135,6 +137,8 @@ export const EventCard = memo(function EventCard({
     );
   }
 
+  const link = past ? null : findPrimaryEventLink(event);
+
   return (
     <div className={classes} style={style}>
       <div className="flex items-center justify-between gap-2">
@@ -145,9 +149,12 @@ export const EventCard = memo(function EventCard({
           {formatTimeUntil(event.startTime)}
         </EventText>
       </div>
-      <EventText size="sm" className="truncate font-semibold">
-        {title}
-      </EventText>
+      <div className="flex items-center justify-between gap-2">
+        <EventText size="sm" className="min-w-0 truncate font-semibold">
+          {title}
+        </EventText>
+        {link && <EventLinkButton link={link} size="sm" />}
+      </div>
       {event.description && (
         <EventText size="sm" muted className="line-clamp-2">
           {event.description}
